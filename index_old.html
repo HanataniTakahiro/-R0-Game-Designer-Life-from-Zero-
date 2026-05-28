@@ -1,0 +1,1293 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>心流自愿 / H5 小游戏原型</title>
+  <style>
+    :root {
+      --bg-0: #09131f;
+      --bg-1: #101f33;
+      --bg-2: #17283d;
+      --panel: rgba(12, 20, 33, 0.78);
+      --panel-strong: rgba(18, 29, 46, 0.92);
+      --line: rgba(255, 255, 255, 0.1);
+      --text: #eef4ff;
+      --muted: rgba(238, 244, 255, 0.68);
+      --accent: #7ce0c3;
+      --accent-2: #ffcb6b;
+      --danger: #ff7a90;
+      --good: #8fe388;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 20%, rgba(124, 224, 195, 0.16), transparent 28%),
+        radial-gradient(circle at 80% 12%, rgba(255, 203, 107, 0.14), transparent 30%),
+        radial-gradient(circle at 70% 90%, rgba(143, 227, 136, 0.10), transparent 26%),
+        linear-gradient(160deg, var(--bg-0), var(--bg-1) 45%, var(--bg-2));
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 36px 36px;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,0.35), rgba(0,0,0,0.08));
+      pointer-events: none;
+    }
+
+    .event-card.dragging {
+      transform: translateY(-6px) scale(1.01);
+      box-shadow: 0 30px 120px rgba(0,0,0,0.48);
+    }
+
+    .choice-btn.drag-accept {
+      outline: 2px solid rgba(124,224,195,0.18);
+      transform: translateY(-4px) scale(1.02);
+    }
+
+    .app {
+      width: min(1160px, calc(100vw - 24px));
+      margin: 0 auto;
+      padding: 24px 0 32px;
+      position: relative;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(20, 31, 48, 0.82), rgba(10, 16, 28, 0.68));
+      backdrop-filter: blur(14px);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .title-panel {
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      justify-content: center;
+      min-height: 188px;
+    }
+
+    .eyebrow {
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 46px);
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+    }
+
+    .subtext {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 62ch;
+      font-size: 14px;
+    }
+
+    .stats-panel {
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+      min-height: 188px;
+    }
+
+    .round-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 2px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .round-row strong {
+      color: var(--text);
+      font-size: 15px;
+    }
+
+    .meter-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .meter {
+      padding: 12px 12px 10px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .meter-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .bar {
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      overflow: hidden;
+    }
+
+    .bar > span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      transition: width 220ms ease, background 220ms ease;
+    }
+
+    .money-bar { background: linear-gradient(90deg, #8aa6ff, #7ce0c3); }
+    .dau-bar { background: linear-gradient(90deg, #7ce0c3, #8fe388); }
+    .users-bar { background: linear-gradient(90deg, #8fe388, #ffcb6b); }
+    .mood-bar { background: linear-gradient(90deg, #ffcb6b, #ff8fb1); }
+    .mon-bar { background: linear-gradient(90deg, #ff8fb1, #c39bff); }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .card-shell {
+      padding: 22px;
+      min-height: 560px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .stage-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(124, 224, 195, 0.12);
+      border: 1px solid rgba(124, 224, 195, 0.18);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .stage-note {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .event-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 22px;
+      border-radius: 28px;
+      background:
+        radial-gradient(circle at top left, rgba(124, 224, 195, 0.14), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(255, 203, 107, 0.12), transparent 30%),
+        linear-gradient(180deg, rgba(16, 26, 42, 0.94), rgba(8, 13, 23, 0.94));
+      border: 1px solid rgba(255,255,255,0.08);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 18px 55px rgba(0,0,0,0.28);
+      touch-action: pan-y;
+      user-select: none;
+      transition: transform 220ms ease, opacity 220ms ease;
+    }
+
+    .event-card::after {
+      content: "";
+      position: absolute;
+      inset: auto -30px 14px auto;
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(124,224,195,0.18), transparent 65%);
+      filter: blur(8px);
+      pointer-events: none;
+    }
+
+    .event-meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .event-type {
+      color: var(--accent-2);
+      border-color: rgba(255, 203, 107, 0.22);
+      background: rgba(255, 203, 107, 0.10);
+    }
+
+    .event-round {
+      color: #c8d8f5;
+      border-color: rgba(200, 216, 245, 0.14);
+      background: rgba(200, 216, 245, 0.08);
+    }
+
+    .event-title {
+      margin: 0;
+      font-size: clamp(26px, 3.6vw, 38px);
+      line-height: 1.08;
+      letter-spacing: -0.04em;
+    }
+
+    .event-desc {
+      margin: 0;
+      color: rgba(238, 244, 255, 0.84);
+      font-size: 16px;
+      line-height: 1.78;
+      min-height: 4.9em;
+    }
+
+    .choice-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .choice-btn {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+      border-radius: 18px;
+      padding: 16px;
+      cursor: pointer;
+      text-align: left;
+      min-height: 128px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+    }
+
+    .choice-btn:hover {
+      transform: translateY(-2px);
+      border-color: rgba(124, 224, 195, 0.24);
+      background: rgba(255,255,255,0.08);
+    }
+
+    .choice-key {
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .choice-label {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .choice-impact {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .choice-btn.left {
+      background: linear-gradient(180deg, rgba(124, 224, 195, 0.13), rgba(255,255,255,0.05));
+    }
+
+    .choice-btn.right {
+      background: linear-gradient(180deg, rgba(255, 203, 107, 0.13), rgba(255,255,255,0.05));
+    }
+
+    .side-panel {
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .side-block {
+      padding: 16px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.045);
+    }
+
+    .side-block h2 {
+      margin: 0 0 10px;
+      font-size: 15px;
+    }
+
+    .side-block p, .side-block li {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .log-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 10px;
+      max-height: 290px;
+      overflow: auto;
+    }
+
+    .log-item {
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,0.14);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: rgba(238,244,255,0.78);
+      font-size: 12px;
+      line-height: 1.65;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .ghost-btn {
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 14px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform 160ms ease, background 160ms ease;
+    }
+
+    .ghost-btn:hover {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,0.08);
+    }
+
+    .result-screen {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(5, 8, 13, 0.58);
+      backdrop-filter: blur(10px);
+      z-index: 20;
+    }
+
+    .result-screen.show {
+      display: flex;
+    }
+
+    .result-card {
+      width: min(720px, 100%);
+      border-radius: 28px;
+      padding: 26px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: linear-gradient(180deg, rgba(22, 33, 52, 0.98), rgba(8, 12, 20, 0.98));
+      box-shadow: var(--shadow);
+    }
+
+    .result-card h2 {
+      margin: 6px 0 10px;
+      font-size: clamp(28px, 4vw, 40px);
+    }
+
+    .result-card p {
+      margin: 0 0 16px;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .result-tags {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .result-tags span {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      font-size: 12px;
+      color: rgba(238,244,255,0.82);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .summary-item {
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .summary-item div {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .summary-item strong {
+      font-size: 18px;
+    }
+
+    @media (max-width: 960px) {
+      .hero, .main-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .card-shell {
+        min-height: auto;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .app {
+        width: min(100vw - 16px, 1160px);
+        padding-top: 12px;
+      }
+
+      .title-panel, .stats-panel, .card-shell, .side-panel {
+        border-radius: 20px;
+      }
+
+      .choice-grid, .meter-grid, .summary-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .event-card {
+        min-height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="hero">
+      <div class="panel title-panel">
+        <div class="eyebrow">Roundtable Warm-up Prototype</div>
+        <h1>从被迫打卡到心流自愿</h1>
+        <p class="subtext">
+          你将扮演一名长线运营策划，在稳定日活、照顾玩家体验与维持商业化之间做出 15 轮抉择。
+          每轮先处理日常流程，再遭遇一个特殊事件。目标不是找出唯一最优解，而是让不同策略的连锁反应被看见。
+        </p>
+      </div>
+      <div class="panel stats-panel">
+        <div class="round-row">
+          <strong id="roundLabel">第 1 轮 / 15</strong>
+          <span id="phaseLabel">阶段：日常流程</span>
+        </div>
+        <div class="meter-grid">
+          <div class="meter">
+            <div class="meter-head"><span>资金</span><span id="moneyText">100</span></div>
+            <div class="bar"><span class="money-bar" id="moneyBar" style="width: 62%"></span></div>
+          </div>
+          <div class="meter">
+            <div class="meter-head"><span>日活</span><span id="dauText">55</span></div>
+            <div class="bar"><span class="dau-bar" id="dauBar" style="width: 55%"></span></div>
+          </div>
+          <div class="meter">
+            <div class="meter-head"><span>玩家数量</span><span id="usersText">60</span></div>
+            <div class="bar"><span class="users-bar" id="usersBar" style="width: 60%"></span></div>
+          </div>
+          <div class="meter">
+            <div class="meter-head"><span>玩家心情</span><span id="moodText">65</span></div>
+            <div class="bar"><span class="mood-bar" id="moodBar" style="width: 65%"></span></div>
+          </div>
+          <div class="meter" style="grid-column: 1 / -1;">
+            <div class="meter-head"><span>氪金力度</span><span id="monText">45</span></div>
+            <div class="bar"><span class="mon-bar" id="monBar" style="width: 45%"></span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <main class="main-grid">
+      <section class="panel card-shell">
+        <div class="stage-row">
+          <div class="pill" id="stagePill">日常流程</div>
+          <div class="stage-note" id="stageNote">左右滑动卡片，或直接点击下方按钮。</div>
+        </div>
+
+        <article class="event-card" id="eventCard" aria-live="polite">
+          <div>
+            <div class="event-meta">
+              <span class="pill event-round" id="eventRoundTag">Round 1</span>
+              <span class="pill event-type" id="eventTypeTag">日常</span>
+            </div>
+            <h2 class="event-title" id="eventTitle">加载中...</h2>
+            <p class="event-desc" id="eventDesc">事件正在生成。</p>
+          </div>
+
+          <div class="choice-grid">
+            <button class="choice-btn left" id="choiceLeft">
+              <span class="choice-key">Left / A</span>
+              <span class="choice-label" id="choiceLeftLabel">-</span>
+              <span class="choice-impact" id="choiceLeftImpact">-</span>
+            </button>
+            <button class="choice-btn right" id="choiceRight">
+              <span class="choice-key">Right / D</span>
+              <span class="choice-label" id="choiceRightLabel">-</span>
+              <span class="choice-impact" id="choiceRightImpact">-</span>
+            </button>
+          </div>
+        </article>
+      </section>
+
+      <aside class="panel side-panel">
+        <div class="side-block">
+          <h2>玩法说明</h2>
+          <p>每轮先处理日常流程，再进入一个与当前状态相关的特殊事件。资金若连续 4 轮为负，项目失败；完成 15 轮则进入结算。</p>
+        </div>
+
+        <div class="side-block">
+          <h2>最近记录</h2>
+          <ul class="log-list" id="logList"></ul>
+        </div>
+
+        <div class="side-block">
+          <h2>控制</h2>
+          <div class="actions">
+            <button class="ghost-btn" id="restartBtn">重新开始</button>
+            <button class="ghost-btn" id="fastForwardBtn">查看结算</button>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <div class="result-screen" id="resultScreen" role="dialog" aria-modal="true">
+    <div class="result-card">
+      <div class="eyebrow">结算结果</div>
+      <h2 id="resultTitle">—</h2>
+      <p id="resultDesc">—</p>
+      <div class="result-tags" id="resultTags"></div>
+      <div class="summary-grid">
+        <div class="summary-item"><div>资金</div><strong id="sumMoney">0</strong></div>
+        <div class="summary-item"><div>日活 / 数量</div><strong id="sumScale">0 / 0</strong></div>
+        <div class="summary-item"><div>心情 / 氪金</div><strong id="sumPulse">0 / 0</strong></div>
+      </div>
+      <div class="actions">
+        <button class="ghost-btn" id="playAgainBtn">再来一局</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+    const round = (value) => Math.round(value);
+    const int = (value) => Math.round(value);
+
+    const state = {
+      round: 1,
+      money: 100,
+      dau: 55,
+      userCount: 60,
+      mood: 65,
+      monetization: 45,
+      debtRounds: 0,
+      stage: "daily",
+      currentEvent: null,
+      hasEnded: false,
+      forcedEnding: null,
+      lastImpact: null,
+      log: [],
+      specialSeen: new Set(),
+      dailySeen: new Set(),
+    };
+
+    const dailyEvents = [
+      {
+        id: "daily-tasks",
+        title: "任务节奏权衡",
+        description: "考虑通过任务密度提升数据，但更高频的操作会增加玩家的挫败感与流失风险。",
+        left: { label: "提高密度（黏性）", impact: "日活 +8，心情 -6，资金 -4", delta: { dau: 8, mood: -6, money: -4 } },
+        right: { label: "降低密度（友好）", impact: "心情 +7，日活 -3，资金 -2", delta: { mood: 7, dau: -3, money: -2 } },
+      },
+      {
+        id: "daily-login",
+        title: "登录与激励策略",
+        description: "讨论是否通过更显著的激励拉回用户，或以容错与补签降低复访门槛以守住口碑。",
+        left: { label: "高频激励（拉回）", impact: "日活 +6，玩家数量 +5，资金 -8", delta: { dau: 6, userCount: 5, money: -8 } },
+        right: { label: "补签容错（体验）", impact: "心情 +4，资金 -3，日活 +2", delta: { mood: 4, money: -3, dau: 2 } },
+      },
+      {
+        id: "daily-event",
+        title: "活动节奏与强度",
+        description: "是否通过更强的限时活动驱动短期活跃，还是选择低强度活动以保护长期留存？",
+        left: { label: "强化活动（短期拉高）", impact: "氪金 +6，日活 +5，心情 -7", delta: { monetization: 6, dau: 5, mood: -7 } },
+        right: { label: "轻量活动（护体验）", impact: "心情 +6，氪金 -4，资金 -5", delta: { mood: 6, monetization: -4, money: -5 } },
+      },
+      {
+        id: "daily-stamina",
+        title: "体力门槛调整",
+        description: "数值组拿来了两套方案，一套更强势，一套更松弛。",
+        left: { label: "提高门槛", impact: "资金 +9，氪金 +7，心情 -8", delta: { money: 9, monetization: 7, mood: -8 } },
+        right: { label: "降低门槛", impact: "日活 +4，玩家数量 +3，资金 -5", delta: { dau: 4, userCount: 3, money: -5 } },
+      },
+      {
+        id: "daily-community",
+        title: "社区活动提案",
+        description: "社区同学认为，可以用一点温度换一点留存。",
+        left: { label: "做一场大活动", impact: "玩家数量 +7，心情 +5，资金 -7", delta: { userCount: 7, mood: 5, money: -7 } },
+        right: { label: "只做轻互动", impact: "心情 +3，日活 +2，资金 -1", delta: { mood: 3, dau: 2, money: -1 } },
+      },
+      {
+        id: "daily-shop",
+        title: "商店折扣窗口",
+        description: "商业化入口需要再次被点亮，但入口过强也会影响氛围。",
+        left: { label: "打开折扣口", impact: "氪金 +8，资金 +10，心情 -7", delta: { monetization: 8, money: 10, mood: -7 } },
+        right: { label: "收窄促销面", impact: "心情 +4，氪金 -3，日活 +2", delta: { mood: 4, monetization: -3, dau: 2 } },
+      },
+      {
+        id: "daily-balance",
+        title: "福利回收与补贴",
+        description: "财务和用户两边都在等一个平衡点。",
+        left: { label: "回收福利", impact: "资金 +12，心情 -9，玩家数量 -3", delta: { money: 12, mood: -9, userCount: -3 } },
+        right: { label: "继续补贴", impact: "心情 +6，资金 -8，日活 +3", delta: { mood: 6, money: -8, dau: 3 } },
+      },
+      {
+        id: "daily-resonance",
+        title: "版本节奏校准",
+        description: "节奏如果太紧，体验会疲惫；太松，项目又会显得不够有声量。",
+        left: { label: "压缩版本节奏", impact: "日活 +7，心情 -5，资金 +2", delta: { dau: 7, mood: -5, money: 2 } },
+        right: { label: "拉长更新间隔", impact: "心情 +5，玩家数量 +2，资金 -4", delta: { mood: 5, userCount: 2, money: -4 } },
+      },
+      {
+        id: "daily-bonus",
+        title: "新人扶持方案",
+        description: "拉新与保活总会先后到来，选择哪一端都不轻松。",
+        left: { label: "偏向拉新", impact: "玩家数量 +8，资金 -6，氪金 +2", delta: { userCount: 8, money: -6, monetization: 2 } },
+        right: { label: "偏向保活", impact: "心情 +7，日活 +4，资金 -3", delta: { mood: 7, dau: 4, money: -3 } },
+      },
+      {
+        id: "daily-alert",
+        title: "客服与舆情联动",
+        description: "有些反馈不是数据上的波动，而是玩家对节奏的感知变化。",
+        left: { label: "快速响应", impact: "心情 +6，资金 -4，玩家数量 +2", delta: { mood: 6, money: -4, userCount: 2 } },
+        right: { label: "拖到下一版", impact: "资金 +5，日活 -4，心情 -6", delta: { money: 5, dau: -4, mood: -6 } },
+      },
+    ];
+
+    const specialEvents = [
+      {
+        id: "special-hot",
+        title: "热度曲线抬升",
+        description: "某个活动意外拉高了热度，团队希望把波峰继续推上去。",
+        tags: ["high-dau"],
+        left: { label: "乘势扩张", impact: "资金 +8，日活 +6，心情 -5", delta: { money: 8, dau: 6, mood: -5 } },
+        right: { label: "控制峰值", impact: "心情 +4，日活 -2，资金 -2", delta: { mood: 4, dau: -2, money: -2 } },
+      },
+      {
+        id: "special-pressure",
+        title: "商业化提案升级",
+        description: "商业团队提出更激进的方案，短期收益和长期感受都将被放大。",
+        tags: ["high-monetization"],
+        left: { label: "全面加压", impact: "资金 +14，氪金 +8，心情 -10", delta: { money: 14, monetization: 8, mood: -10 } },
+        right: { label: "拆成细项", impact: "资金 +6，氪金 +3，心情 -4", delta: { money: 6, monetization: 3, mood: -4 } },
+      },
+      {
+        id: "special-relief",
+        title: "减负提案通过",
+        description: "策划组终于拿到一个让节奏松一点的窗口。",
+        tags: ["low-mood"],
+        left: { label: "顺势减负", impact: "心情 +10，日活 +4，资金 -6", delta: { mood: 10, dau: 4, money: -6 } },
+        right: { label: "只做补丁", impact: "心情 +5，玩家数量 +2，资金 -2", delta: { mood: 5, userCount: 2, money: -2 } },
+      },
+      {
+        id: "special-budget",
+        title: "预算告急",
+        description: "财务窗口的颜色已经有点不对了，很多方案必须重新排序。",
+        tags: ["low-money"],
+        left: { label: "砍掉活动", impact: "资金 +10，日活 -6，心情 -4", delta: { money: 10, dau: -6, mood: -4 } },
+        right: { label: "继续硬撑", impact: "日活 +3，资金 -8，玩家数量 -2", delta: { dau: 3, money: -8, userCount: -2 } },
+      },
+      {
+        id: "special-content",
+        title: "内容库存告急",
+        description: "当玩法循环持续太久，用户会开始注意到节奏里的空隙。",
+        tags: ["midlate"],
+        left: { label: "重做结构", impact: "心情 +6，资金 -7，氪金 -2", delta: { mood: 6, money: -7, monetization: -2 } },
+        right: { label: "先用活动垫住", impact: "资金 +4，日活 +4，心情 -6", delta: { money: 4, dau: 4, mood: -6 } },
+      },
+      {
+        id: "special-community",
+        title: "社区氛围摇摆",
+        description: "社区里开始同时出现期待与疲劳，两种声音都很真实。",
+        tags: ["midlate"],
+        left: { label: "回到体验侧", impact: "心情 +8，日活 +2，资金 -5", delta: { mood: 8, dau: 2, money: -5 } },
+        right: { label: "继续追数据", impact: "资金 +7，氪金 +4，心情 -8", delta: { money: 7, monetization: 4, mood: -8 } },
+      },
+      {
+        id: "special-newseason",
+        title: "新赛季开场",
+        description: "团队准备切换内容节奏，新的起点也意味着旧的压力要被重新整理。",
+        tags: ["high-dau", "midlate"],
+        left: { label: "全面重置", impact: "日活 +8，心情 -4，资金 -3", delta: { dau: 8, mood: -4, money: -3 } },
+        right: { label: "维持当前节奏", impact: "心情 +4，玩家数量 +2，资金 -2", delta: { mood: 4, userCount: 2, money: -2 } },
+      },
+      {
+        id: "special-rebound",
+        title: "留存回弹窗口",
+        description: "有一波用户回来了，但是否能留下，取决于之后的动作。",
+        tags: ["high-users"],
+        left: { label: "趁势补强", impact: "玩家数量 +6，资金 -4，心情 +2", delta: { userCount: 6, money: -4, mood: 2 } },
+        right: { label: "快速收口", impact: "资金 +5，氪金 +3，心情 -5", delta: { money: 5, monetization: 3, mood: -5 } },
+      },
+      {
+        id: "special-break",
+        title: "节奏中断",
+        description: "现实事务和运营节奏同时提醒你，维持链条并不总能被精确控制。",
+        tags: ["low-users", "low-mood"],
+        left: { label: "延后部分安排", impact: "心情 +7，日活 -4，资金 -3", delta: { mood: 7, dau: -4, money: -3 } },
+        right: { label: "继续追进度", impact: "资金 +6，玩家数量 -3，心情 -6", delta: { money: 6, userCount: -3, mood: -6 } },
+      },
+      {
+        id: "special-repair",
+        title: "体验修复窗口",
+        description: "一些微小调整可以修复感受，但会打乱原有的节奏预期。",
+        tags: ["low-mood", "midlate"],
+        left: { label: "集中修复", impact: "心情 +9，资金 -6，氪金 -3", delta: { mood: 9, money: -6, monetization: -3 } },
+        right: { label: "局部修补", impact: "心情 +4，玩家数量 +2，资金 -2", delta: { mood: 4, userCount: 2, money: -2 } },
+      },
+      {
+        id: "special-stability",
+        title: "节奏相对稳定",
+        description: "看起来一切都没有出大问题，但稳定本身也会随着时间消耗意义。",
+        tags: ["default"],
+        left: { label: "继续巡航", impact: "日活 +3，资金 +2，心情 -3", delta: { dau: 3, money: 2, mood: -3 } },
+        right: { label: "预留缓冲", impact: "心情 +4，资金 -3，玩家数量 +1", delta: { mood: 4, money: -3, userCount: 1 } },
+      },
+      {
+        id: "special-overheat",
+        title: "系统过热预警",
+        description: "你已经能感觉到系统在发热，很多信号都在提示：现在不是继续加码的时候。",
+        tags: ["low-mood", "high-monetization"],
+        left: { label: "临时降温", impact: "心情 +8，氪金 -4，资金 -4", delta: { mood: 8, monetization: -4, money: -4 } },
+        right: { label: "硬顶过去", impact: "资金 +8，日活 -5，心情 -9", delta: { money: 8, dau: -5, mood: -9 } },
+      },
+    ];
+
+    const endings = [
+      {
+        id: "collapse",
+        title: "资本抽离",
+        desc: "在连续的短期举措后，外部资源选择撤离，项目被迫进入重整与裁剪阶段。",
+        tone: "negative",
+        tags: ["资源耗尽", "重组"],
+      },
+      {
+        id: "burnout",
+        title: "心流耗尽",
+        desc: "玩家的精神预算被反复占用，社群活力逐步折损——数据仍在，但热情不再。",
+        tone: "negative",
+        tags: ["体验崩塌", "长线风险"],
+      },
+      {
+        id: "steady",
+        title: "平稳留存",
+        desc: "运营选择了折中路径：短期没有爆发，但生态保持了可持续的循环与呼吸。",
+        tone: "neutral",
+        tags: ["平衡", "可持续"],
+      },
+      {
+        id: "reframing",
+        title: "节奏重构",
+        desc: "你成功把时间从被动消费转为可投资的体验——玩家开始把时间当作价值储蓄。",
+        tone: "positive",
+        tags: ["心流", "长期回报"],
+      },
+      {
+        id: "warmth",
+        title: "余温留存",
+        desc: "虽无大热但生态保留了可继续经营的温度，社区与付费保持稳定增长。",
+        tone: "positive",
+        tags: ["长线", "余温"],
+      },
+      {
+        id: "overloaded",
+        title: "高峰衰竭",
+        desc: "短期高强度商业化换来了数据峰值，但很快出现碎片化流失与舆论代价。",
+        tone: "warning",
+        tags: ["过载", "口碑风险"],
+      },
+    ];
+
+    const els = {
+      roundLabel: document.getElementById("roundLabel"),
+      phaseLabel: document.getElementById("phaseLabel"),
+      stagePill: document.getElementById("stagePill"),
+      stageNote: document.getElementById("stageNote"),
+      eventRoundTag: document.getElementById("eventRoundTag"),
+      eventTypeTag: document.getElementById("eventTypeTag"),
+      eventTitle: document.getElementById("eventTitle"),
+      eventDesc: document.getElementById("eventDesc"),
+      choiceLeft: document.getElementById("choiceLeft"),
+      choiceRight: document.getElementById("choiceRight"),
+      choiceLeftLabel: document.getElementById("choiceLeftLabel"),
+      choiceLeftImpact: document.getElementById("choiceLeftImpact"),
+      choiceRightLabel: document.getElementById("choiceRightLabel"),
+      choiceRightImpact: document.getElementById("choiceRightImpact"),
+      eventCard: document.getElementById("eventCard"),
+      logList: document.getElementById("logList"),
+      moneyText: document.getElementById("moneyText"),
+      dauText: document.getElementById("dauText"),
+      usersText: document.getElementById("usersText"),
+      moodText: document.getElementById("moodText"),
+      monText: document.getElementById("monText"),
+      moneyBar: document.getElementById("moneyBar"),
+      dauBar: document.getElementById("dauBar"),
+      usersBar: document.getElementById("usersBar"),
+      moodBar: document.getElementById("moodBar"),
+      monBar: document.getElementById("monBar"),
+      restartBtn: document.getElementById("restartBtn"),
+      fastForwardBtn: document.getElementById("fastForwardBtn"),
+      resultScreen: document.getElementById("resultScreen"),
+      resultTitle: document.getElementById("resultTitle"),
+      resultDesc: document.getElementById("resultDesc"),
+      resultTags: document.getElementById("resultTags"),
+      sumMoney: document.getElementById("sumMoney"),
+      sumScale: document.getElementById("sumScale"),
+      sumPulse: document.getElementById("sumPulse"),
+      playAgainBtn: document.getElementById("playAgainBtn"),
+    };
+
+    function resetState() {
+      state.round = 1;
+      state.money = 100;
+      state.dau = 52;
+      state.userCount = 58;
+      state.mood = 62;
+      state.monetization = 40;
+      state.debtRounds = 0;
+      state.stage = "daily";
+      state.currentEvent = null;
+      state.hasEnded = false;
+      state.forcedEnding = null;
+      state.lastImpact = null;
+      state.log = [];
+      state.specialSeen = new Set();
+      state.dailySeen = new Set();
+      els.resultScreen.classList.remove("show");
+      pushLog("新的项目已启动，系统重置为初始状态。");
+      buildRound();
+      render();
+    }
+
+    function pickDailyEvent() {
+      return dailyEvents[Math.floor(Math.random() * dailyEvents.length)];
+    }
+
+    function scoreSpecialEvent(event) {
+      let score = 1;
+      if (event.tags.includes("low-money")) score += state.money < 30 ? 8 : state.money < 60 ? 2 : -1;
+      if (event.tags.includes("high-monetization")) score += state.monetization > 70 ? 8 : state.monetization > 55 ? 2 : -1;
+      if (event.tags.includes("low-mood")) score += state.mood < 35 ? 8 : state.mood < 55 ? 2 : -1;
+      if (event.tags.includes("high-dau")) score += state.dau > 75 ? 7 : state.dau > 60 ? 2 : -1;
+      if (event.tags.includes("high-users")) score += state.userCount > 75 ? 5 : state.userCount > 55 ? 1 : -1;
+      if (event.tags.includes("low-users")) score += state.userCount < 35 ? 7 : state.userCount < 55 ? 2 : -1;
+      if (event.tags.includes("midlate")) score += state.round >= 8 ? 4 : 0;
+      if (event.tags.includes("default")) score += 0.5;
+      return score;
+    }
+
+    function pickSpecialEvent() {
+      const pool = specialEvents.filter((event) => !state.specialSeen.has(event.id));
+      const candidates = pool.length ? pool : specialEvents;
+      const weighted = candidates.map((event) => ({ event, weight: Math.max(0.4, scoreSpecialEvent(event)) }));
+      const total = weighted.reduce((sum, item) => sum + item.weight, 0);
+      let roll = Math.random() * total;
+      for (const item of weighted) {
+        roll -= item.weight;
+        if (roll <= 0) {
+          state.specialSeen.add(item.event.id);
+          return item.event;
+        }
+      }
+      const fallback = weighted[weighted.length - 1].event;
+      state.specialSeen.add(fallback.id);
+      return fallback;
+    }
+
+    function buildRound() {
+      if (state.hasEnded) return;
+      const event = state.stage === "daily" ? pickDailyEvent() : pickSpecialEvent();
+      state.currentEvent = state.stage === "daily"
+        ? {
+            kind: "daily",
+            title: event.title,
+            description: event.description,
+            left: event.left,
+            right: event.right,
+          }
+        : {
+            kind: "special",
+            title: event.title,
+            description: event.description,
+            left: event.left,
+            right: event.right,
+          };
+      renderCurrentEvent();
+    }
+
+    function applyDelta(delta) {
+      state.money += delta.money ?? 0;
+      state.dau += delta.dau ?? 0;
+      state.userCount += delta.userCount ?? 0;
+      state.mood += delta.mood ?? 0;
+      state.monetization += delta.monetization ?? 0;
+    }
+
+    function settleAfterEvent() {
+      const baseCost = 9 + state.round * 2 + Math.floor((state.round - 1) / 4) * 4;
+      const income = Math.round(
+        state.userCount * (0.28 + state.dau / 220) * (0.30 + state.monetization / 220) * (0.58 + state.mood / 230)
+      );
+      state.money += income - Math.round(baseCost);
+
+      const dauChange = 0.14 * (state.mood - 50) - 0.10 * Math.max(0, state.monetization - 55) - 0.06 * state.round;
+      const usersChange = 0.10 * (state.dau - 50) + 0.12 * (state.mood - 50) - 0.04 * Math.max(0, state.monetization - 65);
+      const moodChange = 0.12 * (state.dau - 50) - 0.11 * Math.max(0, state.monetization - 50) - 0.08 * state.round;
+      const monetizationChange = state.round % 3 === 0 ? -1 : 0;
+
+      state.dau += dauChange;
+      state.userCount += usersChange;
+      state.mood += moodChange;
+      state.monetization += monetizationChange;
+
+      clampState();
+      updateDebtCounter();
+      pushLog(`第 ${state.round} 轮结算：净收入 ${income}，基础消耗 ${Math.round(baseCost)}。`);
+    }
+
+    function clampState() {
+      state.dau = clamp(int(state.dau), 0, 100);
+      state.userCount = clamp(int(state.userCount), 0, 100);
+      state.mood = clamp(int(state.mood), 0, 100);
+      state.monetization = clamp(int(state.monetization), 0, 100);
+    }
+
+    function updateDebtCounter() {
+      if (state.money < 0) {
+        state.debtRounds += 1;
+      } else {
+        state.debtRounds = 0;
+      }
+    }
+
+    function resolveEnding(reason) {
+      if (state.hasEnded) return;
+      state.hasEnded = true;
+      let ending = null;
+
+      if (reason === "debt" || state.debtRounds >= 4 || state.money < -30) {
+        ending = endings[0];
+      } else if (state.mood <= 18 && state.monetization >= 80 && state.round >= 7) {
+        ending = endings[5];
+      } else if (state.userCount <= 20 && state.dau <= 25 && state.round >= 6) {
+        ending = endings[2];
+      } else if (state.money >= 150 && state.mood >= 55 && state.dau >= 65) {
+        ending = endings[3];
+      } else if (state.money >= 110 && state.mood >= 45 && state.dau >= 50 && state.userCount >= 45) {
+        ending = endings[4];
+      } else if (state.money < 0 || state.mood < 30) {
+        ending = endings[1];
+      } else {
+        ending = endings[3];
+      }
+
+      state.forcedEnding = ending;
+      showEnding(ending, reason);
+    }
+
+    function showEnding(ending, reason) {
+      els.resultTitle.textContent = ending.title;
+      els.resultDesc.textContent = ending.desc + (reason === "finish" ? " 你已经完成了 15 轮，系统转入结算。" : "");
+      els.resultTags.innerHTML = "";
+      ending.tags.forEach((tag) => {
+        const span = document.createElement("span");
+        span.textContent = tag;
+        els.resultTags.appendChild(span);
+      });
+      els.sumMoney.textContent = Math.round(state.money);
+      els.sumScale.textContent = `${clamp(state.dau, 0, 100)} / ${clamp(state.userCount, 0, 100)}`;
+      els.sumPulse.textContent = `${clamp(state.mood, 0, 100)} / ${clamp(state.monetization, 0, 100)}`;
+      els.resultScreen.classList.add("show");
+      pushLog(`结局触发：${ending.title}。`);
+    }
+
+    function applyChoice(side) {
+      if (state.hasEnded || !state.currentEvent) return;
+      const picked = side === "left" ? state.currentEvent.left : state.currentEvent.right;
+      const chosenLabel = picked.label;
+      const currentKind = state.currentEvent.kind;
+
+      applyDelta(picked.delta);
+      clampState();
+      state.lastImpact = picked.impact;
+
+      pushLog(`${currentKind === "daily" ? "日常" : "特殊"}事件：${state.currentEvent.title}，选择了「${chosenLabel}」。`);
+
+      if (state.stage === "daily") {
+        state.stage = "special";
+        updatePhaseLabel();
+        render();
+        buildRound();
+        return;
+      }
+
+      settleAfterEvent();
+      if (checkImmediateFailure()) return;
+
+      if (state.round >= 15) {
+        resolveEnding("finish");
+        return;
+      }
+
+      state.round += 1;
+      state.stage = "daily";
+      updatePhaseLabel();
+      buildRound();
+      render();
+    }
+
+    function checkImmediateFailure() {
+      if (state.debtRounds >= 4) {
+        resolveEnding("debt");
+        return true;
+      }
+      if (state.money < -40) {
+        resolveEnding("debt");
+        return true;
+      }
+      return false;
+    }
+
+    function updatePhaseLabel() {
+      if (state.stage === "daily") {
+        els.phaseLabel.textContent = "阶段：日常流程";
+        els.stagePill.textContent = "日常流程";
+        els.stageNote.textContent = "从日常运营选项中做一次两选一决策。";
+        els.eventTypeTag.textContent = "日常";
+      } else {
+        els.phaseLabel.textContent = "阶段：特殊事件";
+        els.stagePill.textContent = "特殊事件";
+        els.stageNote.textContent = "根据当前状态触发的非线性事件，通常更具连锁反应。";
+        els.eventTypeTag.textContent = "特殊";
+      }
+    }
+
+    function renderCurrentEvent() {
+      if (!state.currentEvent) return;
+      els.eventRoundTag.textContent = `Round ${state.round}`;
+      els.eventTitle.textContent = state.currentEvent.title;
+      els.eventDesc.textContent = state.currentEvent.description;
+      els.choiceLeftLabel.textContent = state.currentEvent.left.label;
+      els.choiceLeftImpact.textContent = state.currentEvent.left.impact;
+      els.choiceRightLabel.textContent = state.currentEvent.right.label;
+      els.choiceRightImpact.textContent = state.currentEvent.right.impact;
+      updatePhaseLabel();
+      els.choiceLeft.disabled = state.hasEnded;
+      els.choiceRight.disabled = state.hasEnded;
+    }
+
+    function render() {
+      els.roundLabel.textContent = `第 ${state.round} 轮 / 15`;
+      els.moneyText.textContent = Math.round(state.money);
+      els.dauText.textContent = clamp(state.dau, 0, 100);
+      els.usersText.textContent = clamp(state.userCount, 0, 100);
+      els.moodText.textContent = clamp(state.mood, 0, 100);
+      els.monText.textContent = clamp(state.monetization, 0, 100);
+
+      els.moneyBar.style.width = `${clamp(Math.abs(state.money), 0, 160) / 160 * 100}%`;
+      els.dauBar.style.width = `${clamp(state.dau, 0, 100)}%`;
+      els.usersBar.style.width = `${clamp(state.userCount, 0, 100)}%`;
+      els.moodBar.style.width = `${clamp(state.mood, 0, 100)}%`;
+      els.monBar.style.width = `${clamp(state.monetization, 0, 100)}%`;
+
+      els.moneyText.style.color = state.money < 0 ? "var(--danger)" : "var(--text)";
+      els.roundLabel.style.color = state.debtRounds > 0 ? "var(--danger)" : "var(--text)";
+
+      els.logList.innerHTML = "";
+      const recent = state.log.slice(-7).reverse();
+      if (recent.length === 0) {
+        const empty = document.createElement("li");
+        empty.className = "log-item";
+        empty.textContent = "暂无记录，先做出第一步选择。";
+        els.logList.appendChild(empty);
+      } else {
+        recent.forEach((line) => {
+          const item = document.createElement("li");
+          item.className = "log-item";
+          item.textContent = line;
+          els.logList.appendChild(item);
+        });
+      }
+      renderCurrentEvent();
+    }
+
+    function pushLog(message) {
+      state.log.push(message);
+      if (state.log.length > 30) {
+        state.log.shift();
+      }
+      render();
+    }
+
+    function fastForwardToEnd() {
+      if (state.hasEnded) return;
+      while (!state.hasEnded && state.round <= 15) {
+        if (state.stage === "daily") {
+          applyChoice(Math.random() < 0.5 ? "left" : "right");
+        } else {
+          applyChoice(Math.random() < 0.5 ? "left" : "right");
+        }
+        if (state.hasEnded) break;
+        if (state.round > 15) break;
+      }
+      if (!state.hasEnded) {
+        resolveEnding("finish");
+      }
+    }
+
+    els.choiceLeft.addEventListener("click", () => applyChoice("left"));
+    els.choiceRight.addEventListener("click", () => applyChoice("right"));
+    els.restartBtn.addEventListener("click", resetState);
+    els.playAgainBtn.addEventListener("click", resetState);
+    els.fastForwardBtn.addEventListener("click", fastForwardToEnd);
+
+    let pointerStartX = null;
+    let pointerStartY = null;
+    let pointerActive = false;
+
+    els.eventCard.addEventListener("pointerdown", (event) => {
+      if (event.target.closest("button")) {
+        return;
+      }
+      pointerActive = true;
+      pointerStartX = event.clientX;
+      pointerStartY = event.clientY;
+      els.eventCard.setPointerCapture(event.pointerId);
+      els.eventCard.classList.add("dragging");
+    });
+
+    els.eventCard.addEventListener("pointermove", (event) => {
+      if (!pointerActive || pointerStartX == null) return;
+      const dx = event.clientX - pointerStartX;
+      const dy = event.clientY - pointerStartY;
+      const w = els.eventCard.clientWidth || window.innerWidth;
+      // horizontal dominant drag only
+      if (Math.abs(dx) > Math.abs(dy)) {
+        const px = Math.max(-1, Math.min(1, dx / (w * 0.6)));
+        els.eventCard.style.transform = `translateX(${px * 18}%)`;
+        // threshold for accept
+        const threshold = Math.max(48, w * 0.12);
+        if (dx > threshold) {
+          els.choiceRight.classList.add("drag-accept");
+          els.choiceLeft.classList.remove("drag-accept");
+        } else if (dx < -threshold) {
+          els.choiceLeft.classList.add("drag-accept");
+          els.choiceRight.classList.remove("drag-accept");
+        } else {
+          els.choiceLeft.classList.remove("drag-accept");
+          els.choiceRight.classList.remove("drag-accept");
+        }
+      }
+    });
+
+    els.eventCard.addEventListener("pointerup", (event) => {
+      if (!pointerActive || pointerStartX == null || pointerStartY == null) return;
+      const dx = event.clientX - pointerStartX;
+      const dy = event.clientY - pointerStartY;
+      pointerActive = false;
+      pointerStartX = null;
+      pointerStartY = null;
+      els.eventCard.releasePointerCapture && els.eventCard.releasePointerCapture(event.pointerId);
+      els.eventCard.classList.remove("dragging");
+      els.eventCard.style.transform = "";
+      els.choiceLeft.classList.remove("drag-accept");
+      els.choiceRight.classList.remove("drag-accept");
+      const w = els.eventCard.clientWidth || window.innerWidth;
+      const threshold = Math.max(48, w * 0.12);
+      if (Math.abs(dx) > threshold && Math.abs(dx) > Math.abs(dy)) {
+        applyChoice(dx > 0 ? "right" : "left");
+      }
+    });
+
+    els.eventCard.addEventListener("pointercancel", () => {
+      pointerActive = false;
+      pointerStartX = null;
+      pointerStartY = null;
+      els.eventCard.classList.remove("dragging");
+      els.eventCard.style.transform = "";
+      els.choiceLeft.classList.remove("drag-accept");
+      els.choiceRight.classList.remove("drag-accept");
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (state.hasEnded) return;
+      if (event.key === "ArrowLeft" || event.key === "a" || event.key === "A") applyChoice("left");
+      if (event.key === "ArrowRight" || event.key === "d" || event.key === "D") applyChoice("right");
+      if (event.key === "r" || event.key === "R") resetState();
+    });
+
+    resetState();
+  </script>
+</body>
+</html>
