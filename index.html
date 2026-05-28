@@ -1055,7 +1055,7 @@ const ENDINGS = {
   BAD: { id:'END_BAD', title:'温水煮青蛙', badge:'💔', desc:'游戏还在运行，但你已经感觉到了下坡路的加速度。' },
   CRASH_REP: { id:'END_CRASH_REP', title:'众叛亲离', badge:'💀', desc:'口碑崩盘，玩家用脚投票。你看着1.2分的评分，想起了上一世的自己。' },
   CRASH_GRIND: { id:'END_CRASH_GRIND', title:'爆肝地狱', badge:'☠️', desc:'日常任务堆成山，玩家终于崩溃了。"我到底是在玩游戏还是在上夜班？"' },
-  CRASH_FUND: { id:'END_CRASH_FUND', title:'资金断裂', badge:'💸', desc:'资金链断了，明天服务器就要到期了。' },
+  CRASH_FUND: { id:'END_CRASH_FUND', title:'资金断裂', badge:'💸', desc:'资金链要断了，最后一个月每天送一百抽，最后的狂欢！' },
 };
 
 function determineEnding() {
@@ -1071,7 +1071,7 @@ function determineEnding() {
   else if (G.rep >= 75 && G.dau < 26000) endingId = 'END_NICHE';
   else if (G.rep <= 20) endingId = 'END_CRASH_REP';
   else if (G.grind >= 75) endingId = 'END_CRASH_GRIND';
-  else if (G.fund <= 1000) endingId = 'END_CRASH_FUND';
+  else if (G.fund <= 3000) endingId = 'END_CRASH_FUND';
   else if (G.dau >= 20000) endingId = 'END_NORMAL';
   else endingId = 'END_BAD';
 
