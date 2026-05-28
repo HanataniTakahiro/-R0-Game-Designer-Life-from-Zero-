@@ -56,6 +56,7 @@ html, body { width: 100%; min-height: 100vh; background: var(--bg); color: var(-
   margin-bottom: 8px; letter-spacing: 3px;
 }
 .title-sub { font-size: 13px; color: var(--text2); margin-bottom: 30px; line-height: 1.6; }
+.title-byline { font-size: 12px; color: var(--text2); margin-bottom: 6px; opacity: 0.7; font-style: italic; }
 .name-label { font-size: 15px; margin-bottom: 10px; }
 .name-input {
   background: var(--bg3); border: 2px solid var(--gold); border-radius: 10px;
@@ -254,7 +255,12 @@ html, body { width: 100%; min-height: 100vh; background: var(--bg); color: var(-
 .ending-stat .label { font-size: 10px; color: var(--text2); }
 .ending-stat .value { font-size: 16px; font-weight: 700; margin-top: 1px; }
 .ending-desc { font-size: 13px; color: var(--text2); line-height: 1.7; max-width: 340px; margin-bottom: 16px; }
-.ending-pct { font-size: 12px; color: var(--text2); margin-bottom: 16px; }
+.ending-pct { font-size: 12px; color: var(--text2); margin-bottom: 12px; }
+.ending-survey { margin-bottom: 16px; }
+.survey-text { font-size: 13px; color: var(--text2); line-height: 1.8; margin-bottom: 12px; }
+.survey-text a { color: var(--gold); text-decoration: underline; word-break: break-all; }
+.survey-img { width: 200px; height: auto; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); }
+.survey-bottom { font-size: 13px; color: var(--text2); margin-top: 10px; }
 .btn-restart {
   background: linear-gradient(135deg, var(--gold), #d4a800);
   border: none; border-radius: 10px; padding: 10px 32px;
@@ -337,6 +343,7 @@ html, body { width: 100%; min-height: 100vh; background: var(--bg); color: var(-
   <!-- Title -->
   <div id="title">
     <div class="title-main">重生之我要当顶级策划</div>
+    <div class="title-byline">by——鱼柒×7 & 伦敦阿农</div>
     <div class="title-sub">上一世过于压榨玩家导致关服<br>这一世，你的每个决定都可能改变命运</div>
     <div class="name-label">天才策划的名字是：</div>
     <input class="name-input" id="name-input" type="text" placeholder="输入你的大名" maxlength="8" autocomplete="off">
@@ -436,6 +443,11 @@ html, body { width: 100%; min-height: 100vh; background: var(--bg); color: var(-
     <div class="ending-stats" id="ending-stats"></div>
     <div class="ending-desc" id="ending-desc"></div>
     <div class="ending-pct">该结局达成率: <span style="color:var(--gold);font-weight:700;" id="ending-pct">--</span>%</div>
+    <div class="ending-survey">
+      <div class="survey-text">感谢您的游玩~<br>如果有时间，麻烦做一个小调查，不尽感激！<br>链接：<a href="https://v.wjx.cn/vm/rCUj7YU.aspx" target="_blank">https://v.wjx.cn/vm/rCUj7YU.aspx</a><br>或者扫码：</div>
+      <img class="survey-img" src="PIC.png" alt="问卷调查二维码">
+      <div class="survey-bottom">祝你开心每一天~</div>
+    </div>
     <button class="btn-restart" onclick="restartGame()">再来一局</button>
   </div>
 </div>
@@ -465,7 +477,7 @@ const NEW_PROPOSALS = [
 { title:'上调保底并增加安慰奖动画', desc:'保底从50抽涨到120抽，中间每20抽给个"谢谢参与"的华丽动画特效', tag:'商业化', dau:3, rep:-8, grind:0, fund:3000, rejectDau:-1, rejectRep:6, rejectGrind:0, rejectFund:-600,
   feedback:{ approve:'玩家抽到第19抽时开始期待"谢谢参与"的特效，据说比出SSR还稀有。', reject:'你保住了保底，玩家感动哭了——字面意义上的。' } },
 
-{ title:'新增自动续费订阅制——每月送"电子木鱼"', desc:'每月30元自动续费，送一个"电子木鱼"挂件，敲一下积功德+1', tag:'商业化', dau:4, rep:-6, grind:0, fund:2800, rejectDau:-2, rep:5, rejectGrind:0, rejectFund:-400,
+{ title:'新增自动续费订阅制——每月送"电子木鱼"', desc:'每月30元自动续费，送一个"电子木鱼"挂件，敲一下积功德+1', tag:'商业化', dau:8, rep:8, grind:0, fund:3000, rejectDau:-2, rep:5, rejectGrind:0, rejectFund:-400,
   feedback:{ approve:'电子木鱼销量惊人，玩家凌晨三点在公屏敲木鱼求SSR。' } },
 
 // --- 活动（6条）---
@@ -599,11 +611,10 @@ const PROPOSALS = [
   { title:'"修复了恋爱可以分手的Bug"充值活动', desc:'蹭某二次元游戏结婚Bug热度搞反向营销，情侣关系充值，对方获得等额代币', tag:'活动', dau:6, rep:6, grind:3, fund:-500, rejectRep:-3,
     feedback:{ approve:'全网炸锅！有为了蹭福利假装情侣的玩家真在一起了，奔现Vlog爆火，口碑大涨，玩家数量激增！', reject:'运营叹了口气："这波热度不蹭，竞品就要蹭了。"你看着热搜上的别人家游戏，有点后悔。' } },
   { title:'在《昨日黄花》投放买量广告', desc:'万一爆了呢', tag:'市场', dau:2, rep:-3, grind:3, fund:-1800, rejectDau:-3, rejectGrind:2, rejectFund:500 },
-  { title:'工作室扶持有个初创团队想做《重生之我要当顶级策划》的小游戏，在寻求技术支持', desc:'策划这种高端岗位，岂是尔辈可以尝试的', tag:'请支持我们喵QAQ', dau:10, rep:10, grind:0, fund:-800, rejectDau:0, rejectRep:0,
+  { title:'咱们工作室扶持的初创团队想做《重生之我要当顶级策划》的小游戏，在寻求技术支持', desc:'策划这种高端岗位，岂是尔辈可以尝试的', tag:'请支持我们喵QAQ', dau:10, rep:10, grind:0, fund:-800, rejectDau:0, rejectRep:0,
     feedback:{ approve:'本着鼓励年轻制作者的心态支持了，没想到爆火！上热搜了！', reject:'你扼杀了游戏界的新星，你这个冷漠无情的人我是不原谅你的TAT我会一直看着你，，直到永远。。。。' } },
   { title:'服务器被攻击，全服补偿200r的付费道具', desc:'黑客攻击导致宕机6小时，玩家已经冲烂了微博评论区', tag:'技术', dau:-3, rep:-6, grind:0, fund:-800, rejectDau:-5, rejectRep:-10,
     feedback:{ approve:'补偿邮件发出后，评论区的风向从"垃圾游戏"变成了"什么时候修好，我还想玩"。', reject:'冷处理的结果是话题冲上热搜，评论区成了玩家团建的打卡地。公关部的电话被打爆了。' } },
-  { title:'祖传代码紧急打补丁方案', desc:'核心模块是五年前外包写的没人敢动，今天终于炸了', tag:'技术', dau:-5, rep:-4, grind:8, fund:-1200, rejectDau:2, rejectRep:-8, rejectGrind:12, rejectFund:-300 },
   { title:'测试环境事故全服回档处理', desc:'全服玩家收到debug面板和99999钻，程序正在瑟瑟发抖', tag:'技术', dau:-6, rep:-6, grind:0, fund:-100, rejectDau:6, rejectRep:3, rejectFund:-1500 },
   { title:'抽卡概率异常回档补偿方案', desc:'限定卡池概率变成0.001%，玩家10万抽没出货开始集体维权', tag:'技术', dau:-1, rep:10, grind:2, fund:-800, rejectDau:-2, rejectRep:-10, rejectGrind:2, rejectFund:-500 },
   { title:'未成年充值全额退款处理', desc:'”他还只是个孩子啊！”', tag:'市场', dau:2, rep:0, grind:0, fund:-800, rejectDau:-2, rejectRep:5, rejectFund:+800 },
@@ -628,26 +639,26 @@ const PROPOSALS = [
 const SILVER_POT_CHAIN = [
   { title:'与《银锅锅之战》联名提案', desc:'市场部谈下和《银锅锅之战》的联名合作，推出限定角色和道具。成本很高，但热度也高。', tag:'活动',
     feedback:{ approve:'联名确定！玩家社区一片欢腾，纷纷在猜上线时间。接下来几周都是联名内容。', reject:'你拒绝了联名，团队有点失落。市场部说这个IP热度很高，错过可惜了。' } },
-  { title:'免费福利的核心道具从签到即得改成连续做7天任务', desc:'银锅锅联动期间连续7日完成每日任务领取限定锅锅皮肤，是拉日活的好机会。但会不会太肝了？', tag:'活动', dau:4, rep:2, grind:6, fund:200,
-    rejectDau:2, rejectRep:4, rejectGrind:-6, rejectFund:0,
+  { title:'免费福利的核心道具从签到即得改成连续做7天任务', desc:'银锅锅联动期间连续7日完成每日任务领取限定锅锅皮肤，是拉日活的好机会。但会不会太肝了？', tag:'活动', dau:7, rep:5, grind:3, fund:0,
+    rejectDau:5, rejectRep:10, rejectGrind:-6, rejectFund:0,
     feedback:{ approve:'日活猛增，但是缺勤1天没拿到皮肤的玩家痛彻心扉', reject:'签到就拿到了皮肤，玩家迫不及待地开了两把，日活不降反增' } },
-  { title:'联名宣传PV全平台投流', desc:'为银锅锅联名拍摄宣传片，在短视频平台大规模买量投放', tag:'市场', dau:5, rep:2, grind:1, fund:-1200,
-    rejectDau:-3, rejectRep:-1, rejectGrind:0, rejectFund:400,
+  { title:'联名宣传PV全平台投流', desc:'为银锅锅联名拍摄宣传片，在短视频平台大规模买量投放', tag:'市场', dau:10, rep:10, grind:0, fund:-1000,
+    rejectDau:5, rejectRep:5, rejectGrind:0, rejectFund:0,
     feedback:{ approve:'PV播放量500万！评论区一半在问"什么游戏"，一半在刷银锅锅表情包。', reject:'宣传片没投，知道联名的人少了一大半。市场部看着KPI沉默。' } },
-  { title:'开设银锅锅主题线下快闪店', desc:'在北上广深开设限时主题快闪店，售卖限定周边', tag:'活动', dau:3, rep:7, grind:4, fund:-600,
-    rejectDau:-1, rejectRep:-4, rejectGrind:-1, rejectFund:200,
+  { title:'开设银锅锅主题线下快闪店', desc:'在北上广深开设限时主题快闪店，售卖限定周边', tag:'活动', dau:5, rep:8, grind:4, fund:1000,
+    rejectDau:4, rejectRep:4, rejectGrind:-10, rejectFund:200,
     feedback:{ approve:'快闪店排队3小时！周边被黄牛炒到5倍价格。玩家一边骂饥饿营销一边晒周边。', reject:'快闪店取消了，玩家期待落空。"我机票都订好了你就给我看这个？"' } },
-  { title:'联名限定道具高价抽奖', desc:'联动限定传说道具放入抽奖池，保底约2000元，氪佬和普通玩家都会很激动', tag:'商业化', dau:1, rep:-8, grind:2, fund:1800,
-    rejectDau:-1, rejectRep:5, rejectGrind:-1, rejectFund:-500,
+  { title:'联名限定道具高价抽奖', desc:'联动限定传说道具放入抽奖池，保底约2000元，氪佬和普通玩家都会很激动', tag:'商业化', dau:1, rep:-8, grind:0, fund:7000,
+    rejectDau:4, rejectRep:5, rejectGrind:-5, rejectFund:-500,
     feedback:{ approve:'氪佬一天抽穿保底，普通玩家骂吃相难看。但财务看流水报表笑了。', reject:'不搞抽奖了，玩家松了口气，但KPI缺口谁来补？' } },
-  { title:'推出银锅锅限定语音包"锅言锅语"', desc:'角色语音替换成银锅锅内的经典台词。""这波不背锅！""锅来！"建议耳机党慎重', tag:'商业化', dau:3, rep:2, grind:0, fund:1500,
-    rejectDau:-1, rep:4, rejectGrind:0, rejectFund:-300,
+  { title:'推出银锅锅限定语音包"锅言锅语"', desc:'角色语音替换成银锅锅内的经典台词。""这波不背锅！""锅来！"建议耳机党慎重', tag:'商业化', dau:10, rep:10, grind:0, fund:2000,
+    rejectDau:-1, rep:5, rejectGrind:-10, rejectFund:0,
     feedback:{ approve:'语音包上线首日销量爆炸。决赛圈全是"锅来！"的叫声，选手分不清是敌是锅。', reject:'你没上语音包，玩家用系统自带语音打了三局——索然无味。' } },
-  { title:'银锅锅联动期间服务器扩容', desc:'联名的可是顶流啊！预计联动期间流量暴增，建议提前扩容。但费用够再谈三个银锅锅联名了', tag:'技术', dau:5, rep:6, grind:0, fund:-2000,
-    rejectDau:-4, rep:-7, grind:0, fund:500,
+  { title:'银锅锅联动期间服务器扩容', desc:'联名的可是顶流啊！预计联动期间流量暴增，建议提前扩容。但费用够再谈三个银锅锅联名了', tag:'技术', dau:20, rep:2, grind:0, fund:-3000,
+    rejectDau:5, rejectrep:-2, rejectgrind:0, rejectfund:5000,
     feedback:{ approve:'联动当天在线人数破纪录，服务器一声没吭，好样的！', reject:'你没扩容。开服10分钟后服务器炸了。' } },
-  { title:'推出银锅锅联动限定通行证', desc:'68元解锁通行证，满级送银锅锅联名绝版套装——肝满约40小时，或者直接氪金跳级', tag:'商业化', dau:6, rep:-3, grind:8, fund:3200,
-    rejectDau:-1, rep:5, rejectGrind:-3, rejectFund:-800,
+  { title:'推出银锅锅联动限定通行证', desc:'68元解锁通行证，满级送银锅锅联名绝版套装——肝满约40小时，或者直接氪金跳级', tag:'商业化', dau:10, rep:2, grind:10, fund:4000,
+    rejectDau:5, rep:10, rejectGrind:-15, rejectFund:0,
     feedback:{ approve:'通行证销量打破纪录，无论是日活还是财务数据都爆了。', reject:'你没出通行证。玩家保住了钱包也保住了肝，但总觉得这个月少了点奔头。' } },
 ];
 
