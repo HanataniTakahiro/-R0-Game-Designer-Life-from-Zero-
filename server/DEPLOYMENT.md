@@ -66,7 +66,7 @@ npm install
 
 ```env
 # 服务器配置
-PORT=3000
+PORT=3001
 
 # PostgreSQL 数据库配置
 DB_HOST=localhost
@@ -97,7 +97,7 @@ npm start
 修改 `index.html` 中的 API 地址：
 
 ```javascript
-const MONITOR_API = 'http://your-server-ip:3000/api';
+const MONITOR_API = 'http://your-server-ip:3001/api';
 ```
 
 ### 5. 监测面板
@@ -105,7 +105,7 @@ const MONITOR_API = 'http://your-server-ip:3000/api';
 启动服务后，访问以下地址查看实时监测面板：
 
 ```
-http://your-server-ip:3000/monitor.html
+http://your-server-ip:3001/monitor.html
 ```
 
 ## API 接口说明
@@ -229,14 +229,14 @@ server {
     server_name your-domain.com;
 
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3001;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
 
     location /api {
-        proxy_pass http://localhost:3000/api;
+        proxy_pass http://localhost:3001/api;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
