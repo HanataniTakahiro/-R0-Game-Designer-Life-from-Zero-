@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>重生之我要当顶级策划</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0a0e1a;
+  --bg2: #111827;
+  --bg3: #1a2133;
+  --text: #e2e8f0;
+  --text2: #94a3b8;
+  --gold: #f0c040;
+  --green: #22c55e;
+  --red: #ef4444;
+  --orange: #f59e0b;
+  --blue: #3b82f6;
+}
+
+html, body { width: 100%; min-height: 100vh; background: var(--bg); color: var(--text); font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; overflow: hidden; height: 100%; }
+
+#app { width: 100%; max-width: 480px; margin: 0 auto; height: 100vh; position: relative; }
+
+/* ========== Opening ========== */
+#opening {
+  position: fixed; inset: 0; background: #05080f; z-index: 1000;
+  display: flex; align-items: center; justify-content: center; padding: 30px;
+  opacity: 0; transition: opacity 0.5s; pointer-events: none;
+}
+#opening.show { opacity: 1; pointer-events: auto; }
+#opening.hide { opacity: 0; pointer-events: none; }
+.opening-text {
+  font-size: 15px; line-height: 2; color: var(--text2); max-width: 400px;
+  white-space: pre-wrap; min-height: 200px;
+}
+.opening-text .cursor { display: inline-block; width: 2px; height: 1em; background: var(--gold); animation: blink 0.8s infinite; vertical-align: text-bottom; }
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+.opening-skip { position: fixed; bottom: 30px; right: 30px; color: var(--text2); font-size: 13px; cursor: pointer; background: none; border: 1px solid #333; padding: 6px 16px; border-radius: 20px; }
+.opening-skip:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ========== Title ========== */
+#title {
+  position: fixed; inset: 0; background: var(--bg); z-index: 900;
+  display: none; align-items: center; justify-content: center;
+  flex-direction: column; padding: 30px; text-align: center;
+}
+#title.show { display: flex; animation: fadeIn 0.6s; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.title-main {
+  font-size: 32px; font-weight: 900; color: var(--gold);
+  text-shadow: 0 0 30px rgba(255,215,0,0.25);
+  margin-bottom: 8px; letter-spacing: 3px;
+}
+.title-sub { font-size: 13px; color: var(--text2); margin-bottom: 30px; line-height: 1.6; }
+.name-label { font-size: 15px; margin-bottom: 10px; }
+.name-input {
+  background: var(--bg3); border: 2px solid var(--gold); border-radius: 10px;
+  padding: 10px 18px; font-size: 16px; color: var(--text); text-align: center;
+  width: 260px; outline: none; margin-bottom: 20px;
+}
+.name-input:focus { box-shadow: 0 0 15px rgba(255,215,0,0.15); }
+.btn-start {
+  background: linear-gradient(135deg, var(--gold), #d4a800);
+  border: none; border-radius: 10px; padding: 12px 40px;
+  font-size: 18px; font-weight: 700; color: #1a1a2e;
+  cursor: pointer; transition: all 0.2s; letter-spacing: 2px;
+}
+.btn-start:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(255,215,0,0.3); }
+
+/* ========== Game ========== */
+#game {
+  display: none; height: 100dvh; padding: 12px 12px 0;
+  flex-direction: column; overflow-y: auto;
+}
+#game.show { display: flex; }
+
+.top-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 12px; background: var(--bg2); border-radius: 10px;
+  margin-bottom: 8px; border: 1px solid rgba(255,215,0,0.08);
+}
+.top-bar .title { font-size: 13px; font-weight: 700; color: var(--gold); }
+.top-bar .info { font-size: 12px; color: var(--text2); }
+
+/* Dashboard */
+.dashboard {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 5px;
+  margin-bottom: 8px;
+}
+.metric {
+  background: var(--bg2); border-radius: 8px; padding: 6px 10px;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+.metric .label { font-size: 10px; color: var(--text2); }
+.metric .value { font-size: 16px; font-weight: 700; margin-top: 1px; }
+.metric .bar-bg { height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; margin-top: 3px; overflow: hidden; }
+.metric .bar { height: 100%; border-radius: 2px; transition: width 0.5s; }
+.bar-dau { background: linear-gradient(90deg, var(--gold), #ffd700); }
+.bar-rep { background: linear-gradient(90deg, var(--green), #4ade80); }
+.bar-grind { background: linear-gradient(90deg, var(--orange), #f97316); }
+.bar-fund { background: linear-gradient(90deg, var(--blue), #60a5fa); }
+
+/* Phase indicator */
+.phase-bar {
+  display: flex; gap: 4px; margin-bottom: 8px;
+  justify-content: center;
+}
+.phase-dot {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--bg3); border: 2px solid #333;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; color: var(--text2); transition: all 0.3s;
+}
+.phase-dot.active { border-color: var(--gold); color: var(--gold); }
+.phase-dot.done { border-color: var(--green); color: var(--green); background: rgba(34,197,94,0.1); }
+
+/* Proposal Card */
+.card-area {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: 4px 0; position: relative;
+}
+.proposal-card {
+  width: 100%; max-width: 400px;
+  background: linear-gradient(145deg, #1a2133, #141c2b);
+  border-radius: 16px; padding: 28px 24px;
+  border: 2px solid rgba(255,255,255,0.06);
+  text-align: center;
+  transition: transform 0.3s, opacity 0.3s;
+  position: relative; overflow: hidden;
+  min-height: 280px;
+  display: flex; flex-direction: column; justify-content: center;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.proposal-card::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255,215,0,0.03), transparent 70%);
+  pointer-events: none;
+}
+.proposal-card .tag {
+  font-size: 11px; color: var(--gold); margin-bottom: 12px;
+  letter-spacing: 2px; text-transform: uppercase;
+}
+.proposal-card .title {
+  font-size: 22px; font-weight: 700; line-height: 1.4;
+  margin-bottom: 16px;
+}
+.proposal-card .desc {
+  font-size: 14px; color: var(--text2); line-height: 1.7;
+}
+.proposal-card .hint {
+  margin-top: 20px; font-size: 12px; color: rgba(255,255,255,0.2);
+}
+.proposal-card .swipe-hint-mobile {
+  display: none; margin-top: 12px; gap: 20px; justify-content: center;
+  align-items: center; font-size: 11px; color: rgba(255,255,255,0.15);
+}
+
+/* Swipe hint area */
+.proposal-card.swipe-left {
+  transform: translateX(-120%) rotate(-15deg);
+  opacity: 0; border-color: var(--red);
+}
+.proposal-card.swipe-right {
+  transform: translateX(120%) rotate(15deg);
+  opacity: 0; border-color: var(--green);
+}
+
+/* Buttons */
+.swipe-btns {
+  display: flex; gap: 12px; padding: 8px 12px calc(12px + env(safe-area-inset-bottom));
+  background: var(--bg); z-index: 10;
+  flex-shrink: 0;
+}
+.swipe-btns button {
+  flex: 1; padding: 16px 14px; border-radius: 12px; border: none;
+  font-size: 17px; font-weight: 700; cursor: pointer;
+  transition: all 0.15s; letter-spacing: 1px;
+  min-height: 52px;
+}
+.btn-reject {
+  background: rgba(239,68,68,0.12); color: var(--red);
+  border: 2px solid rgba(239,68,68,0.25);
+}
+.btn-reject:hover, .btn-reject:active { background: rgba(239,68,68,0.25); }
+.btn-approve {
+  background: rgba(34,197,94,0.12); color: var(--green);
+  border: 2px solid rgba(34,197,94,0.25);
+}
+.btn-approve:hover, .btn-approve:active { background: rgba(34,197,94,0.25); }
+
+/* ========== Settlement Overlay ========== */
+#settlement {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 800;
+  display: none; align-items: center; justify-content: center;
+  padding: 20px;
+}
+#settlement.show { display: flex; animation: fadeIn 0.3s; }
+.settlement-box {
+  background: var(--bg2); border-radius: 16px; padding: 24px;
+  width: 100%; max-width: 400px; text-align: center;
+  max-height: 90vh; overflow-y: auto;
+}
+.settlement-box h2 {
+  font-size: 20px; color: var(--gold); margin-bottom: 4px;
+}
+.settlement-box .period {
+  font-size: 12px; color: var(--text2); margin-bottom: 16px;
+}
+.settlement-box .feedback {
+  font-size: 14px; color: var(--text2); line-height: 1.8;
+  margin-bottom: 16px; padding: 12px; background: var(--bg3);
+  border-radius: 10px; text-align: left;
+}
+.settlement-box .feedback .highlight { color: var(--gold); font-weight: 700; }
+.settlement-box .feedback .good { color: var(--green); }
+.settlement-box .feedback .bad { color: var(--red); }
+
+.settlement-changes {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+  margin-bottom: 16px;
+}
+.settlement-changes .item {
+  background: var(--bg3); border-radius: 8px; padding: 8px;
+  font-size: 12px;
+}
+.settlement-changes .item .num { font-size: 18px; font-weight: 700; margin-top: 2px; }
+
+.btn-continue {
+  background: var(--gold); border: none; border-radius: 10px;
+  padding: 12px 36px; font-size: 16px; font-weight: 700;
+  color: #1a1a2e; cursor: pointer;
+}
+.btn-continue:hover { transform: translateY(-1px); }
+
+/* ========== Ending ========== */
+#ending {
+  position: fixed; inset: 0; background: var(--bg); z-index: 1000;
+  display: none; align-items: center; justify-content: center;
+  flex-direction: column; padding: 24px; text-align: center;
+}
+#ending.show { display: flex; animation: fadeIn 0.6s; }
+.ending-badge { font-size: 56px; margin-bottom: 8px; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+.ending-title { font-size: 26px; font-weight: 900; color: var(--gold); margin-bottom: 4px; }
+.ending-id { font-size: 11px; color: var(--text2); margin-bottom: 16px; background: var(--bg3); padding: 3px 10px; border-radius: 20px; }
+.ending-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; max-width: 340px; margin-bottom: 14px; }
+.ending-stat { background: var(--bg2); border-radius: 8px; padding: 8px; border: 1px solid rgba(255,255,255,0.04); }
+.ending-stat .label { font-size: 10px; color: var(--text2); }
+.ending-stat .value { font-size: 16px; font-weight: 700; margin-top: 1px; }
+.ending-desc { font-size: 13px; color: var(--text2); line-height: 1.7; max-width: 340px; margin-bottom: 16px; }
+.ending-pct { font-size: 12px; color: var(--text2); margin-bottom: 16px; }
+.btn-restart {
+  background: linear-gradient(135deg, var(--gold), #d4a800);
+  border: none; border-radius: 10px; padding: 10px 32px;
+  font-size: 15px; font-weight: 700; color: #1a1a2e; cursor: pointer;
+}
+
+	/* ========== Feedback Popup ========== */
+#feedback-popup {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 850;
+  display: none; align-items: center; justify-content: center;
+  padding: 20px;
+}
+#feedback-popup.show { display: flex; animation: fadeIn 0.25s; }
+.feedback-box {
+  background: var(--bg2); border-radius: 16px; padding: 24px 20px;
+  width: 100%; max-width: 380px; text-align: center;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.feedback-box .fb-icon { font-size: 36px; margin-bottom: 6px; }
+.feedback-box .fb-title { font-size: 15px; color: var(--text); font-weight: 700; margin-bottom: 10px; }
+.feedback-box .fb-text { font-size: 13px; color: var(--text2); line-height: 1.7; }
+.btn-fb-continue {
+  margin-top: 16px; background: var(--gold); border: none; border-radius: 8px;
+  padding: 8px 28px; font-size: 14px; font-weight: 700; color: #1a1a2e; cursor: pointer;
+}
+.btn-fb-continue:hover { transform: translateY(-1px); }
+
+/* ========== Tutorial ========== */
+#tutorial {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 900;
+  display: none; align-items: center; justify-content: center;
+  padding: 24px;
+}
+#tutorial.show { display: flex; animation: fadeIn 0.3s; }
+.tutorial-box {
+  background: var(--bg2); border-radius: 20px; padding: 32px 24px;
+  width: 100%; max-width: 380px; text-align: center;
+  border: 1px solid rgba(255,215,0,0.1);
+}
+.tutorial-icon { font-size: 48px; margin-bottom: 8px; }
+.tutorial-title { font-size: 20px; font-weight: 800; color: var(--gold); margin-bottom: 16px; }
+.tutorial-body { font-size: 14px; color: var(--text2); line-height: 2.2; margin-bottom: 20px; }
+.tutorial-body .hl { color: var(--text); font-weight: 600; }
+.tutorial-body .badge { display: inline-block; padding: 2px 12px; border-radius: 5px; font-weight: 700; font-size: 13px; }
+.tutorial-body .badge-ok { background: rgba(34,197,94,0.15); color: var(--green); }
+.tutorial-body .badge-no { background: rgba(239,68,68,0.15); color: var(--red); }
+.tutorial-body .badge-swipe { color: var(--gold); font-weight: 600; }
+.tutorial-hint { font-size: 12px; color: var(--text2); opacity: 0.5; margin-bottom: 16px; }
+.btn-tutorial-go {
+  background: linear-gradient(135deg, var(--gold), #d4a800);
+  border: none; border-radius: 10px; padding: 12px 40px;
+  font-size: 16px; font-weight: 700; color: #1a1a2e; cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-tutorial-go:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(255,215,0,0.3); }
+
+/* ========== Responsive ========== */
+@media (max-width: 380px) {
+  .proposal-card { padding: 20px 16px; min-height: 220px; }
+  .proposal-card .title { font-size: 18px; }
+  .proposal-card .desc { font-size: 13px; }
+  .title-main { font-size: 26px; }
+}
+
+/* 手机上显示滑动提示 */
+@media (hover: none) and (pointer: coarse) {
+  .proposal-card .swipe-hint-mobile { display: flex; }
+  .swipe-btns button { padding: 18px 14px; font-size: 16px; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- Opening -->
+  <div id="opening">
+    <div class="opening-text" id="opening-text"></div>
+    <button class="opening-skip" onclick="skipOpening()">跳过 →</button>
+  </div>
+
+  <!-- Title -->
+  <div id="title">
+    <div class="title-main">重生之我要当顶级策划</div>
+    <div class="title-sub">上一世过于压榨玩家导致关服<br>这一世，你的每个决定都可能改变命运</div>
+    <div class="name-label">天才策划的名字是：</div>
+    <input class="name-input" id="name-input" type="text" placeholder="输入你的大名" maxlength="8" autocomplete="off">
+    <button class="btn-start" onclick="startGame()">开始运营</button>
+  </div>
+
+  <!-- Game -->
+  <div id="game">
+    <div class="top-bar">
+      <div class="title">重生之我要当顶级策划</div>
+      <div class="info" id="top-info">第 1 阶段</div>
+    </div>
+
+    <div class="dashboard">
+      <div class="metric">
+        <div class="label">日活</div>
+        <div class="value" id="m-dau">5,000</div>
+        <div class="bar-bg"><div class="bar bar-dau" id="bar-dau"></div></div>
+      </div>
+      <div class="metric">
+        <div class="label">口碑</div>
+        <div class="value" id="m-rep">70</div>
+        <div class="bar-bg"><div class="bar bar-rep" id="bar-rep"></div></div>
+      </div>
+      <div class="metric">
+        <div class="label">爆肝</div>
+        <div class="value" id="m-grind">20</div>
+        <div class="bar-bg"><div class="bar bar-grind" id="bar-grind"></div></div>
+      </div>
+      <div class="metric">
+        <div class="label">资金</div>
+        <div class="value" id="m-fund">20,000</div>
+        <div class="bar-bg"><div class="bar bar-fund" id="bar-fund"></div></div>
+      </div>
+    </div>
+
+    <div class="phase-bar" id="phase-bar"></div>
+
+    <div class="card-area" id="card-area">
+      <div class="proposal-card" id="proposal-card">
+        <div class="tag" id="prop-tag">运营提案</div>
+        <div class="title" id="prop-title">加载中...</div>
+        <div class="desc" id="prop-desc"></div>
+        <div class="hint">👆 你的选择将影响游戏走向</div>
+        <div class="swipe-hint-mobile">← 左滑拒绝&emsp;&emsp;右滑同意 →</div>
+      </div>
+    </div>
+
+    <div class="swipe-btns">
+      <button class="btn-reject" onclick="swipe('reject')">✕ 拒绝</button>
+      <button class="btn-approve" onclick="swipe('approve')">✓ 同意</button>
+    </div>
+  </div>
+
+  <!-- Settlement -->
+  <div id="settlement">
+    <div class="settlement-box" id="settlement-box">
+      <h2>📊 运营月报</h2>
+      <div class="period" id="settlement-period"></div>
+      <div class="feedback" id="settlement-feedback"></div>
+      <div class="settlement-changes" id="settlement-changes"></div>
+      <button class="btn-continue" onclick="closeSettlement()">继续运营</button>
+    </div>
+  </div>
+
+  <!-- Feedback Popup -->
+  <div id="feedback-popup">
+    <div class="feedback-box">
+      <div class="fb-icon" id="fb-icon">📢</div>
+      <div class="fb-title" id="fb-title"></div>
+      <div class="fb-text" id="fb-text"></div>
+      <button class="btn-fb-continue" onclick="closeFeedback()">继续</button>
+    </div>
+  </div>
+
+  <!-- Tutorial -->
+  <div id="tutorial">
+    <div class="tutorial-box">
+      <div class="tutorial-icon">🎮</div>
+      <div class="tutorial-title">操作指南</div>
+      <div class="tutorial-body">
+        每个提案你都需要做出选择：<br>
+        <span class="badge badge-ok">✓ 同意</span> 或 <span class="badge badge-no">✕ 拒绝</span><br><br>
+        你可以 <span class="hl">点击底部按钮</span> 操作，<br>也支持 <span class="badge-swipe">← 左滑拒绝 / 右滑同意 →</span><br>
+        你的每一个决定都将影响游戏的命运！
+      </div>
+      <div class="tutorial-hint">首轮提案即将到来</div>
+      <button class="btn-tutorial-go" onclick="closeTutorial()">开始运营！</button>
+    </div>
+  </div>
+
+  <!-- Ending -->
+  <div id="ending">
+    <div class="ending-badge" id="ending-badge">🌟</div>
+    <div class="ending-title" id="ending-title"></div>
+    <div class="ending-id" id="ending-id"></div>
+    <div class="ending-stats" id="ending-stats"></div>
+    <div class="ending-desc" id="ending-desc"></div>
+    <div class="ending-pct">该结局达成率: <span style="color:var(--gold);font-weight:700;" id="ending-pct">--</span>%</div>
+    <button class="btn-restart" onclick="restartGame()">再来一局</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// 100条新提案 - 幽默诙谐风格 + 光子工作室梗
+// 分类：A组（有feedback 50条）| B组（无feedback 50条）
+// ============================================================
+
+const NEW_PROPOSALS = [
+
+// ======================================================================
+// A组：有即时反馈（feedback）—— 50条
+// ======================================================================
+
+// --- 技术（5条）---
+
+{ title:'引入AI升级反外挂系统导致误封，人工排查', desc:'新的反外挂AI太智能了，把排行榜前100的大佬全封了，理由是"操作过于非人"', tag:'技术', dau:-6, rep:-10, grind:2, fund:-300, rejectDau:4, rejectRep:-4, rejectGrind:2, rejectFund:200,
+  feedback:{ approve:'解封公告发出去，大佬们表示"被AI认定为非人，这波不亏"。', reject:'大佬们建了个"被外挂系统认证群"，人数比官方群还多。' } },
+
+{ title:'美术要求更新4K材质大包体上线', desc:'美术组说"4K材质必须上"，程序说"谁管玩家手机内存"。', tag:'技术', dau:-4, rep:-6, grind:0, fund:-200, rejectDau:2, rejectRep:3, rejectGrind:0, rejectFund:0,
+  feedback:{ approve:'更新后玩家发现画质提升约等于开了个滤镜，但手机发热可以煎鸡蛋了。', reject:'你拒绝了，美术总监在你办公室门口贴了个"扼杀艺术的凶手"。' } },
+
+// --- 商业化（5条）---
+
+{ title:'上调保底并增加安慰奖动画', desc:'保底从50抽涨到120抽，中间每20抽给个"谢谢参与"的华丽动画特效', tag:'商业化', dau:3, rep:-8, grind:0, fund:3000, rejectDau:-1, rejectRep:6, rejectGrind:0, rejectFund:-600,
+  feedback:{ approve:'玩家抽到第19抽时开始期待"谢谢参与"的特效，据说比出SSR还稀有。', reject:'你保住了保底，玩家感动哭了——字面意义上的。' } },
+
+{ title:'新增自动续费订阅制——每月送"电子木鱼"', desc:'每月30元自动续费，送一个"电子木鱼"挂件，敲一下积功德+1', tag:'商业化', dau:4, rep:-6, grind:0, fund:2800, rejectDau:-2, rep:5, rejectGrind:0, rejectFund:-400,
+  feedback:{ approve:'电子木鱼销量惊人，玩家凌晨三点在公屏敲木鱼求SSR。' } },
+
+// --- 活动（6条）---
+{ title:'联动保时捷·共享单车版', desc:'联动共享单车品牌，游戏内载具变成扫码解锁版，骑5分钟自动锁车', tag:'活动', dau:4, rep:-5, grind:3, fund:1500, rejectDau:2, rep:6, rejectGrind:-2, rejectFund:-300,
+  feedback:{ approve:'玩家骑着共享单车在游戏里跑图，到副本边发现要付99元的"超区调度费"。'} },
+
+{ title:'举办第一届"策划祭天"玩家联欢会', desc:'线上玩家见面会，直播策划在线接受玩家审判，附带抽奖环节', tag:'活动', dau:6, rep:10, grind:2, fund:-800, rejectDau:-2, rep:-5, rejectGrind:0, rejectFund:-200,
+  feedback:{ approve:'策划在台上被玩家喷到自闭，但直播人数破了纪录，这个月的KPI保住了。弹幕狂刷："建议办成年度例行活动"。'} },
+
+{ title:'推出365天连续签到活动', desc:'连续签到一年送金色称号，中断一天从头再来。产品经理："这叫用户粘性。"', tag:'活动', dau:8, rep:-3, grind:6, fund:-100, rejectDau:-2, rep:5, rejectGrind:-3, rejectFund:200,
+  feedback:{ approve:'第364天断签的玩家在官群发了一篇小作文，比《红楼梦》还长。', reject:'你没有推出这个阴间活动，全年无休的痛苦你愿意一个人承担。' } },
+
+{ title:'限时活动——在游戏里找BUG送皮肤', desc:'玩家每提交一个有效BUG奖励限定皮肤，QA团队表示要失业了', tag:'活动', dau:10, rep:12, grind:5, fund:-1500, rejectDau:3, rep:-3, rejectGrind:2, rejectFund:500,
+  feedback:{ approve:'玩家比QA专业，一天提了3000个BUG。程序看了一眼工单，默默预约了植发医生。', reject:'你拒绝了，第二天竞品上线了这个活动。你的QA团队松了口气，市场部想杀人。' } },
+
+{ title:'推出五一挂机送道具活动', desc:'在线挂满8小时送限定头像框，致敬"游戏上班族"', tag:'活动', dau:7, rep:2, grind:12, fund:-100, rejectDau:2, rep:6, rejectGrind:-4, rejectFund:200,
+  feedback:{ approve:'玩家挂机挂出了工伤感，论坛热帖：《今天我在游戏里上了个班》。', reject:'你没搞挂机活动，玩家说"良心策划"，转头去了隔壁挂机。' } },
+
+{ title:'上线充值福利"砍一刀"', desc:'充值后可以分享给好友"砍一刀"，但进度精确到小数点后10位', tag:'活动', dau:8, rep:-6, grind:4, fund:2000, rejectDau:3, rep:5, rejectGrind:-2, rejectFund:-500,
+  feedback:{ approve:'砍一刀链接刷爆家族群，老妈给你的侄子砍完之后说"这游戏的策划真坏。"', reject:'你制止了这场社交灾难，玩家称你为"最后的良心"。' } },
+
+// --- 体验（5条）---
+
+{ title:'新增"防沉迷式"健康答题系统', desc:'连续游戏1小时后弹出高数题，答对继续玩，答错强制下线', tag:'体验', dau:-5, rep:-8, grind:-4, fund:100, rejectDau:4, rep:7, rejectGrind:0, rejectFund:-100,
+  feedback:{ approve:'玩家为了继续游戏开始疯狂复习高数，论坛变成考研交流群。', reject:'你否决了这个提案，玩家表示"策划还是个人"，但你只是懒得写题目。' } },
+
+{ title:'新增"策划给你点赞"系统', desc:'玩家达成特定成就时，屏幕弹出你的大头照并竖起大拇指', tag:'体验', dau:1, rep:6, grind:0, fund:-100, rejectDau:0, rep:-2, rejectGrind:0, rejectFund:0,
+  feedback:{ approve:'玩家看到策划大头照的第一反应是截图做表情包。你的脸开始在各个群里流传。', reject:'你保护了自己的肖像权，但也失去了成为网红的唯一机会。（黑红也是红）' } },
+
+// --- 内容（5条）---
+{ title:'停更剧情一个月全力开发新皮肤', desc:'剧情哪有皮肤赚钱，停更剧情专心做皮肤', tag:'内容', dau:-4, rep:-10, grind:2, fund:1800, rejectDau:3, rep:8, rejectGrind:-1, rejectFund:-600,
+  feedback:{ approve:'玩家在贴吧发帖：《文案不是被裁了？》。你不敢回。' } },
+
+// --- 社区（5条）---
+
+{ title:'开放"骂策划"专区', desc:'开设专区供玩家自由发挥，每条骂帖自动回复"收到，已转达策划"', tag:'社区', dau:4, rep:10, grind:0, fund:-100, rejectDau:-1, rep:-4, rejectGrind:0, rejectFund:0,
+  feedback:{ approve:'专区开了一天，社区服务器崩了。运维："这流量比游戏本身还大。"但的的确确收获了很多宝贵的建议。', reject:'你没开专区，玩家表示很失望——他们本来准备了很多新词。' } },
+
+{ title:'招募玩家当荣誉策划设计皮肤', desc:'每月选一个玩家来当一天策划，设计一款皮肤并上线', tag:'社区', dau:8, rep:12, grind:3, fund:-500, rejectDau:-2, rep:-5, rejectGrind:0, rejectFund:200,
+  feedback:{ approve:'当选玩家设计了一款"五彩斑斓的黑"皮肤，销量创下新高。"丑得别具一格的真得买"'} },
+
+// --- 系统（5条）---
+
+{ title:'新增"策划的凝视"BUFF', desc:'玩家长时间在线时，屏幕边缘出现你的头像并弹出"该休息了"', tag:'系统', dau:2, rep:5, grind:-4, fund:-50, rejectDau:-1, rep:-2, rejectGrind:0, rejectFund:0,
+  feedback:{ approve:'玩家反馈"本来不想下线的，看到策划的脸直接吓到退出游戏"。目的达到了。', reject:'你没做这个功能，因为你怕半夜看到自己的脸也被吓到。' } },
+
+{ title:'赛后新增"复盘"环节', desc:'对局结束后可以不加好友直接给队友发消息，一条1元', tag:'系统', dau:3, rep:-5, grind:0, fund:1800, rejectDau:0, rep:0, rejectGrind:0, rejectFund:0,
+  feedback:{ approve:'赛后问候环节比对局本身还激烈，团队赚翻了，但一个月后该功能下线，理由是影响舆论风俗。' } },
+
+{ title:'新增"寻策划启事"隐藏任务', desc:'地图中藏了100个策划手办，集齐可召唤策划挨打', tag:'系统', dau:6, rep:9, grind:5, fund:-200, rejectDau:1, rep:-3, rejectGrind:1, rejectFund:100,
+  feedback:{ approve:'玩家为了集齐手办跑遍了整个地图，论坛攻略比毕业论文还详细。第100个手办藏在付费地图里，策划你赢了。' } },
+
+// --- 市场（5条）---
+
+{ title:'竞品炸服期间投放抢量广告', desc:'竞品维护期间全渠道投放"不炸服"广告', tag:'市场', dau:10, rep:6, grind:0, fund:-800, rejectDau:-3, rep:-3, rejectGrind:0, rejectFund:200,
+  feedback:{ approve:'广告上线当天，自家服务器也跟着炸了。"', reject:'你没蹭这个热度，你对自家土豆服务器的能力心里有数' } },
+
+// --- 运营（5条）---
+
+{ title:'让全服公告随机整活', desc:'运营每天发一条整活公告，从冷笑话到策划八卦', tag:'运营', dau:4, rep:10, grind:0, fund:0, rejectDau:-1, rep:-3, rejectGrind:0, rejectFund:0,
+  feedback:{ approve:'今天的公告写了"策划午饭吃了螺蛳粉，下午开会没人敢靠近"。玩家截图热传。', reject:'你要求公告正经一点，运营说"好的"然后发了"策划今天很正经，什么都没发生。"' } },
+
+{ title:'每天弹窗5次活动提醒', desc:'每天弹窗5次，关闭按钮缩小到5×5像素', tag:'运营', dau:1, rep:-12, grind:0, fund:1200, rejectDau:2, rep:8, rejectGrind:0, rejectFund:-200,
+  feedback:{ approve:'玩家为了找到关闭按钮发了"寻找关闭按钮"的吐槽视频，热度比官方更新正片高。' } },
+
+// --- 公关（4条）---
+
+{ title:'在见面会送策划同款泡面当伴手礼', desc:'伴手礼是策划同款泡面——据说是加班专属口味', tag:'公关', dau:3, rep:8, grind:0, fund:-300, rejectDau:1, rejectRep:-3, rejectGrind:0,
+  feedback:{ approve:'泡面被挂上某鱼，标题："策划同款加班泡面，吃一口体验007"。还真卖出去了。', reject:'你没安排泡面，玩家自带了，在见面会现场泡了一碗递给你说"尝尝，比你的香"。' } },
+
+// ======================================================================
+// B组：无即时反馈（无feedback）—— 50条
+// ======================================================================
+
+// --- 商业化（5条）---
+{ title:'开箱系统上线——钥匙单独购买', desc:'箱子免费送，开箱钥匙2元一把。致敬某枪战游戏，连玩家骂的话都一样', tag:'商业化', dau:1, rep:-7, grind:0, fund:2600, rejectDau:2, rejectRep:6, rejectGrind:0, rejectFund:-500 },
+{ title:'抽卡增加"策划保佑"特效——加钱版', desc:'抽卡时付费2元触发"策划保佑"特效，出货率不变但动画更华丽', tag:'商业化', dau:2, rep:-6, grind:0, fund:2500, rejectDau:1, rejectRep:5, rejectGrind:0, rejectFund:-300 },
+
+// --- 活动（8条）---
+{ title:'举办"最菜玩家"评选', desc:'鼓励玩家发自己的下饭视频，发放"真·电子榨菜"限定称号', tag:'活动', dau:5, rep:5, grind:3, fund:-100, rejectDau:-1, rejectRep:-3, rejectGrind:1, rejectFund:100 },
+
+// --- 体验（5条）---
+{ title:'将背包容量砍半增加真实感', desc:'背包容量砍半，让玩家感受"真实末日生存"', tag:'体验', dau:-4, rep:-8, grind:6, fund:200, rejectDau:3, rejectRep:6, rejectGrind:-3, rejectFund:-100 },
+
+// --- 内容（5条）---
+{ title:'推出"程序员的头发"武器皮肤', desc:'换上后武器外观还是原皮', tag:'内容', dau:3, rep:6, grind:1, fund:600, rejectDau:1, rejectRep:-3, rejectGrind:0, rejectFund:-100 },
+
+{ title:'在小蓝书投放BUG集锦宣传片', desc:'市场部把上线以来经典BUG做成集锦投放，播放量出奇地好', tag:'市场', dau:7, rep:4, grind:0, fund:-500, rejectDau:-1, rejectRep:-2, rejectGrind:0, rejectFund:200 },
+
+];
+
+console.log('总提案数:', NEW_PROPOSALS.length);
+console.log('有feedback:', NEW_PROPOSALS.filter(p => p.feedback).length);
+console.log('无feedback:', NEW_PROPOSALS.filter(p => !p.feedback).length);
+</script>
+<script>
+// ============================================================
+// 提案数据（40个旧提案 + NEW_PROPOSALS合并）
+// ============================================================
+// 每个提案：title, desc, tag，以及隐藏的影响值（玩家不可见）
+const PROPOSALS = [
+  // ===== 原有24个提案（文案微调 + 部分增加拒绝后果） =====
+  { title:'每日任务数量+3，肝度拉满', desc:'将日常任务从5个增加到8个，奖励相应提升', tag:'系统', dau:6, rep:-6, grind:14, fund:400 },
+  { title:'推出月卡，返利搞到1800‰', desc:'30元月卡每日领福利，没错是千分号', tag:'商业化', dau:4, rep:3, grind:-1, fund:1800 },
+  { title:'日常任务一键扫荡，减负！', desc:'优化任务流程，完成时间减半', tag:'体验', dau:-3, rep:10, grind:-12, fund:-200, rejectRep:-4 },
+  { title:'限时双倍掉落', desc:'活动期间副本掉落翻倍', tag:'活动', dau:5, rep:4, grind:10, fund:100 },
+  { title:'更新主线剧情，文案组的小伙伴需要加班咯', desc:'2026年了老艺术家还在手搓剧情', tag:'内容', dau:5, rep:10, grind:2, fund:-300, rejectDau:-4, rejectRep:-10,
+    feedback:{ approve:'剧情好评如潮！玩家在社区热烈讨论新章节，同人图一夜之间冒出上百张。', reject:'玩家愤怒了——"就这？隔壁一个月更两次，你们半年憋一章？"内容断更的代价开始显现。' } },
+  { title:'传说礼包648，你不买有的是人买', desc:'限时上架传说品质礼包', tag:'商业化', dau:2, rep:-10, grind:-1, fund:2000 },
+  { title:'增加弹窗充值提醒', desc:'玩家每日首次登录弹窗显示充值活动', tag:'商业化', dau:1, rep:-10, grind:1, fund:1500 },
+  { title:'举办公会争霸赛', desc:'跨服公会战，胜者获得限定称号', tag:'活动', dau:8, rep:-2, grind:12, fund:500 },
+  { title:'新手引导砍到10分钟，送五星自选', desc:'精简新手流程，降低入坑门槛', tag:'体验', dau:2, rep:6, grind:-5, fund:-200 },
+  { title:'开启累充回馈，"这次真不限量"', desc:'累计充值达指定额度送稀有道具', tag:'商业化', dau:3, rep:-5, grind:2, fund:1800 },
+  { title:'策划直面会直播', desc:'直播回答玩家问题，送福利', tag:'社区', dau:-2, rep:8, grind:-6, fund:-500, rejectRep:-6 },
+  { title:'增加装备强化系统', desc:'开放装备强化，提升战力上限', tag:'系统', dau:6, rep:-3, grind:10, fund:800 },
+  { title:'扫荡功能上线，护肝行动人人有责', desc:'已通关副本可一键扫荡（真的不要在线时长KPI了？）', tag:'体验', dau:-3, rep:8, grind:-14, fund:-200 },
+  { title:'好友邀请奖励', desc:'邀请好友注册获得限定皮肤', tag:'运营', dau:10, rep:-4, grind:5, fund:600 },
+  { title:'周末登录送好礼', desc:'周六日登录送稀有道具', tag:'活动', dau:6, rep:3, grind:3, fund:-200 },
+  { title:'50抽硬保底，我们真的不是“面游池”', desc:'连续49抽未出当期UP的SSR，下次必出', tag:'系统', dau:3, rep:8, grind:-2, fund:-1000, rejectRep:-6, rejectFund:-300,
+    feedback:{ approve:'官微被"策划是好人"刷屏！玩家奔走相告，当天新增注册量飙升。' } },
+  { title:'开启VIP等级系统', desc:'充值解锁VIP等级，享专属特权', tag:'商业化', dau:3, rep:-10, grind:3, fund:2000 },
+  { title:'签到奖励翻倍', desc:'市场部吐槽说服务器蛀虫又要+1了', tag:'活动', dau:4, rep:4, grind:5, fund:-100 },
+  { title:'缩减限时活动频率', desc:'减少限时活动数量，降低玩家负担', tag:'体验', dau:-5, rep:10, grind:-10, fund:-600, rejectDau:2, rejectRep:-3, rejectGrind:2, rejectFund:-400 },
+  { title:'新增组队副本', desc:'需要3人组队挑战的高难度副本', tag:'系统', dau:6, rep:-2, grind:10, fund:300 },
+  { title:'回收闲置道具活动', desc:'限时开放道具回收兑换', tag:'活动', dau:3, rep:5, grind:4, fund:-300 },
+  { title:'推出自动战斗功能', desc:'日常副本可自动战斗', tag:'体验', dau:-2, rep:8, grind:-12, fund:-200 },
+  { title:'举办同人创作大赛', desc:'鼓励玩家创作同人作品，官方推广优秀作品', tag:'社区', dau:2, rep:8, grind:-3, fund:-500, rejectRep:-5 },
+  { title:'上架每日特惠礼包', desc:'每日刷新6元特惠礼包', tag:'商业化', dau:4, rep:-4, grind:1, fund:1400 },
+
+  // ===== 新增15个提案（全部为两难抉择） =====
+  { title:'"修复了恋爱可以分手的Bug"充值活动', desc:'蹭某二次元游戏结婚Bug热度搞反向营销，情侣关系充值，对方获得等额代币', tag:'活动', dau:6, rep:6, grind:3, fund:-500, rejectRep:-3,
+    feedback:{ approve:'全网炸锅！有为了蹭福利假装情侣的玩家真在一起了，奔现Vlog爆火，口碑大涨，玩家数量激增！', reject:'运营叹了口气："这波热度不蹭，竞品就要蹭了。"你看着热搜上的别人家游戏，有点后悔。' } },
+  { title:'在《昨日黄花》投放买量广告', desc:'万一爆了呢', tag:'市场', dau:2, rep:-3, grind:3, fund:-1800, rejectDau:-3, rejectGrind:2, rejectFund:500 },
+  { title:'工作室扶持有个初创团队想做《重生之我要当顶级策划》的小游戏，在寻求技术支持', desc:'策划这种高端岗位，岂是尔辈可以尝试的', tag:'请支持我们喵QAQ', dau:10, rep:10, grind:0, fund:-800, rejectDau:0, rejectRep:0,
+    feedback:{ approve:'本着鼓励年轻制作者的心态支持了，没想到爆火！上热搜了！', reject:'你扼杀了游戏界的新星，你这个冷漠无情的人我是不原谅你的TAT我会一直看着你，，直到永远。。。。' } },
+  { title:'服务器被攻击，全服补偿200r的付费道具', desc:'黑客攻击导致宕机6小时，玩家已经冲烂了微博评论区', tag:'技术', dau:-3, rep:-6, grind:0, fund:-800, rejectDau:-5, rejectRep:-10,
+    feedback:{ approve:'补偿邮件发出后，评论区的风向从"垃圾游戏"变成了"什么时候修好，我还想玩"。', reject:'冷处理的结果是话题冲上热搜，评论区成了玩家团建的打卡地。公关部的电话被打爆了。' } },
+  { title:'祖传代码紧急打补丁方案', desc:'核心模块是五年前外包写的没人敢动，今天终于炸了', tag:'技术', dau:-5, rep:-4, grind:8, fund:-1200, rejectDau:2, rejectRep:-8, rejectGrind:12, rejectFund:-300 },
+  { title:'测试环境事故全服回档处理', desc:'全服玩家收到debug面板和99999钻，程序正在瑟瑟发抖', tag:'技术', dau:-6, rep:-6, grind:0, fund:-100, rejectDau:6, rejectRep:3, rejectFund:-1500 },
+  { title:'抽卡概率异常回档补偿方案', desc:'限定卡池概率变成0.001%，玩家10万抽没出货开始集体维权', tag:'技术', dau:-1, rep:10, grind:2, fund:-800, rejectDau:-2, rejectRep:-10, rejectGrind:2, rejectFund:-500 },
+  { title:'未成年充值全额退款处理', desc:'”他还只是个孩子啊！”', tag:'市场', dau:2, rep:0, grind:0, fund:-800, rejectDau:-2, rejectRep:5, rejectFund:+800 },
+  { title:'Steam差评如潮启动紧急公关', desc:'Steam评论区变成玩梗现场，好评率17%', tag:'市场', dau:-2, rep:8, grind:4, fund:-1000, rejectDau:-4, rejectRep:-8 },
+  { title:'策划女装直播谢罪', desc:'口碑崩了，运营要在策划组抓壮丁女装直播道歉', tag:'公关', dau:3, rep:8, grind:0, fund:-500, rejectRep:-8,
+    hiddenEvent:{ type:'crossdress', dau:4, text:'🔔 直播效果爆炸！全网热搜！日活额外暴涨！' } },
+  { title:'全服付费道具消失补偿方案', desc:'上周更新导致付费道具凭空消失，玩家已集结在官群准备冲了', tag:'公关', dau:-1, rep:10, grind:0, fund:-1200, rejectDau:-4, rejectRep:-10, rejectGrind:2,
+    feedback:{ approve:'全服补偿发出后，玩家态度软化："态度还行，这次算了。"你松了口气，但财务在背后盯着你。', reject:'官群禁言都挡不住节奏，话题冲上热搜。你的照片被P成"装死策划"的表情包全网传播。' } },
+  { title:'针对玩家退坑长文公开回应', desc:'老玩家写了《致策划的一封信》，字字泣血，转发10万+，每个群都在传。你看到一半放下了手机。', tag:'公关', dau:-2, rep:10, grind:2, fund:-300, rejectDau:-5, rejectRep:-10,
+    feedback:{ approve:'整个策划组手写了一封公开信，老玩家积极回应。社区里很多玩家开始晒自己的游戏回忆，评论区一片泪目。', reject:'事件持续发酵。你刷了一下数据面板——日活和口碑都在急速下滑，但更让你难受的是那封信里的最后一句话。' } },
+  { title:'推出可攻略NPC结婚系统', desc:'每个NPC独立好感度剧情可以告白结婚（策划组被美工刀了）', tag:'内容', dau:5, rep:8, grind:7, fund:-1200, rejectDau:-3, rejectRep:-8 },
+  { title:'新角色数值膨胀开服100倍上线', desc:'为了刺激流水新角色数值全面碾压，老角色变成下水道', tag:'内容', dau:2, rep:-10, grind:5, fund:1600, rejectDau:-3, rejectRep:8, rejectGrind:2, rejectFund:-1000 },
+  { title:'引入AI辅助美术，裁掉一半原画师', desc:'AI产出角色立绘效率惊人，但美术组表示"这是对艺术的背叛"。上线后玩家可能看不出区别，也可能一眼识破。', tag:'内容', dau:3, rep:-3, grind:-2, fund:-800, rejectDau:-1, rejectRep:6, rejectGrind:2, rejectFund:200,
+    unlocks:[{ title:'AI立绘翻车事件公开致歉', desc:'新版本立绘被扒出AI生成，手指数量不对成为鬼畜素材', tag:'技术', dau:2, rep:8, grind:4, fund:-800, rejectDau:3, rejectRep:-10, rejectGrind:2,
+      feedback:{ approve:'致歉信发布后，玩家态度软化——"敢承认就还行"。二创作者开始做六根手指的搞笑手书，反向出圈。', reject:'你说这是"艺术风格"，玩家笑了。鬼畜视频播放量破百万，你的名言被做成了表情包。' } }],
+    feedback:{ approve:'AI出图速度让文案组都惊呆了——但他们也开始担心自己的饭碗。美术总监办公室的灯整夜没关。', reject:'你保住了原画师的饭碗，但产能问题依然摆在面前。隔壁项目组用了AI，版本进度快了一倍。' } },
+];
+
+// ============================================================
+// 银锅锅联动链（5个提案：1个触发 + 4个后续）
+// ============================================================
+const SILVER_POT_CHAIN = [
+  { title:'与《银锅锅之战》联名提案', desc:'市场部谈下和《银锅锅之战》的联名合作，推出限定角色和道具。成本很高，但热度也高。', tag:'活动',
+    feedback:{ approve:'联名确定！玩家社区一片欢腾，纷纷在猜上线时间。接下来几周都是联名内容。', reject:'你拒绝了联名，团队有点失落。市场部说这个IP热度很高，错过可惜了。' } },
+  { title:'免费福利的核心道具从签到即得改成连续做7天任务', desc:'银锅锅联动期间连续7日完成每日任务领取限定锅锅皮肤，是拉日活的好机会。但会不会太肝了？', tag:'活动', dau:4, rep:2, grind:6, fund:200,
+    rejectDau:2, rejectRep:4, rejectGrind:-6, rejectFund:0,
+    feedback:{ approve:'日活猛增，但是缺勤1天没拿到皮肤的玩家痛彻心扉', reject:'签到就拿到了皮肤，玩家迫不及待地开了两把，日活不降反增' } },
+  { title:'联名宣传PV全平台投流', desc:'为银锅锅联名拍摄宣传片，在短视频平台大规模买量投放', tag:'市场', dau:5, rep:2, grind:1, fund:-1200,
+    rejectDau:-3, rejectRep:-1, rejectGrind:0, rejectFund:400,
+    feedback:{ approve:'PV播放量500万！评论区一半在问"什么游戏"，一半在刷银锅锅表情包。', reject:'宣传片没投，知道联名的人少了一大半。市场部看着KPI沉默。' } },
+  { title:'开设银锅锅主题线下快闪店', desc:'在北上广深开设限时主题快闪店，售卖限定周边', tag:'活动', dau:3, rep:7, grind:4, fund:-600,
+    rejectDau:-1, rejectRep:-4, rejectGrind:-1, rejectFund:200,
+    feedback:{ approve:'快闪店排队3小时！周边被黄牛炒到5倍价格。玩家一边骂饥饿营销一边晒周边。', reject:'快闪店取消了，玩家期待落空。"我机票都订好了你就给我看这个？"' } },
+  { title:'联名限定道具高价抽奖', desc:'联动限定传说道具放入抽奖池，保底约2000元，氪佬和普通玩家都会很激动', tag:'商业化', dau:1, rep:-8, grind:2, fund:1800,
+    rejectDau:-1, rejectRep:5, rejectGrind:-1, rejectFund:-500,
+    feedback:{ approve:'氪佬一天抽穿保底，普通玩家骂吃相难看。但财务看流水报表笑了。', reject:'不搞抽奖了，玩家松了口气，但KPI缺口谁来补？' } },
+  { title:'推出银锅锅限定语音包"锅言锅语"', desc:'角色语音替换成银锅锅内的经典台词。""这波不背锅！""锅来！"建议耳机党慎重', tag:'商业化', dau:3, rep:2, grind:0, fund:1500,
+    rejectDau:-1, rep:4, rejectGrind:0, rejectFund:-300,
+    feedback:{ approve:'语音包上线首日销量爆炸。决赛圈全是"锅来！"的叫声，选手分不清是敌是锅。', reject:'你没上语音包，玩家用系统自带语音打了三局——索然无味。' } },
+  { title:'银锅锅联动期间服务器扩容', desc:'联名的可是顶流啊！预计联动期间流量暴增，建议提前扩容。但费用够再谈三个银锅锅联名了', tag:'技术', dau:5, rep:6, grind:0, fund:-2000,
+    rejectDau:-4, rep:-7, grind:0, fund:500,
+    feedback:{ approve:'联动当天在线人数破纪录，服务器一声没吭，好样的！', reject:'你没扩容。开服10分钟后服务器炸了。' } },
+  { title:'推出银锅锅联动限定通行证', desc:'68元解锁通行证，满级送银锅锅联名绝版套装——肝满约40小时，或者直接氪金跳级', tag:'商业化', dau:6, rep:-3, grind:8, fund:3200,
+    rejectDau:-1, rep:5, rejectGrind:-3, rejectFund:-800,
+    feedback:{ approve:'通行证销量打破纪录，无论是日活还是财务数据都爆了。', reject:'你没出通行证。玩家保住了钱包也保住了肝，但总觉得这个月少了点奔头。' } },
+];
+
+// ============================================================
+// 状态
+// ============================================================
+let G = {};
+
+function initState(name) {
+  // 合并旧提案(40) + 新提案(NEW_PROPOSALS)
+  let combined = [...PROPOSALS, ...(typeof NEW_PROPOSALS !== 'undefined' ? NEW_PROPOSALS : [])];
+  // 把"重生之我要当顶级策划"提案抽出来，后面随机插入1-19轮
+  let metaIdx = combined.findIndex(p => p.title && p.title.includes('《重生之我要当顶级策划》'));
+  let metaProposal = metaIdx !== -1 ? combined.splice(metaIdx, 1)[0] : null;
+  let normals = [...combined];
+  for (let i = normals.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [normals[i], normals[j]] = [normals[j], normals[i]];
+  }
+
+  // 构建40个槽位
+  let proposals = new Array(40);
+  // rounds 1-20: 前20个普通提案
+  for (let i = 0; i < 20; i++) proposals[i] = normals[i];
+  // round 21: 银锅锅触发（固定）
+  proposals[20] = SILVER_POT_CHAIN[0];
+  // rounds 22-25: 预留（触发后填银锅锅后续 或 普通提案）
+  proposals[21] = proposals[22] = proposals[23] = proposals[24] = null;
+  // rounds 26-40: 接下来15个普通提案
+  for (let i = 25; i < 40; i++) proposals[i] = normals[i - 5];
+
+  // "重生之我要当顶级策划"必定出现在1-19轮
+  if (metaProposal) {
+    proposals[Math.floor(Math.random() * 19)] = metaProposal;
+  }
+
+  // 拒绝银锅锅时的替补提案（取normals[35..38]，多余提案后续轮次复用）
+  let rejectPool = normals.slice(35, 39);
+  while (rejectPool.length < 4) rejectPool.push(normals[rejectPool.length - 4]);
+
+  G = {
+    playerName: name || '天才策划',
+    round: 0,
+    // 总阶段数（每阶段包含 phaseSize 个提案）
+    totalRounds: 8,
+    // 提案总数（用于内部回合计数）
+    proposalCount: 40,
+    phaseSize: 5,
+    dau: 5000,
+    rep: 50,
+    grind: 20,
+    fund: 20000,
+    proposals: proposals,
+    _rejectPool: rejectPool,
+    _silverPotResolved: false, // 银锅锅触发是否已处理
+    _pendingUnlocks: [],      // 待注入的unlock链事件
+    history: [],
+    currentDau: 0, currentRep: 0, currentGrind: 0, currentFund: 0,
+    phaseDecisions: [],
+    ended: false,
+    showResult: false,
+    endingId: null,
+  };
+}
+
+// ============================================================
+// UI渲染
+// ============================================================
+function renderDash() {
+  // 以“阶段”为单位显示：每 phaseSize 个提案为 1 阶段
+  let phase = Math.floor(G.round / G.phaseSize);
+  document.getElementById('top-info').textContent = `第 ${phase+1}/${G.totalRounds} 阶段 | ${G.playerName}`;
+  document.getElementById('m-dau').textContent = formatNum(G.dau);
+  document.getElementById('m-rep').textContent = G.rep;
+  document.getElementById('m-grind').textContent = G.grind;
+  document.getElementById('m-fund').textContent = formatNum(G.fund);
+  setBar('bar-dau', Math.min(100, G.dau / 300));
+  setBar('bar-rep', G.rep);
+  setBar('bar-grind', G.grind);
+  setBar('bar-fund', Math.min(100, G.fund / 300));
+  renderPhaseBar();
+}
+
+function setBar(id, pct) {
+  let el = document.getElementById(id);
+  if (el) el.style.width = Math.max(0, Math.min(100, pct)) + '%';
+}
+
+function formatNum(n) {
+  if (n >= 10000) return (n/10000).toFixed(1).replace('.0','') + '万';
+  return n.toLocaleString();
+}
+
+function renderPhaseBar() {
+  let bar = document.getElementById('phase-bar');
+  bar.innerHTML = '';
+  let inPhase = G.round % G.phaseSize;
+  for (let i = 0; i < G.phaseSize; i++) {
+    let dot = document.createElement('div');
+    dot.className = 'phase-dot';
+    if (i < inPhase) dot.classList.add('done');
+    else if (i === inPhase) dot.classList.add('active');
+    dot.textContent = i + 1;
+    bar.appendChild(dot);
+  }
+}
+
+// 显示提案
+function showProposal() {
+  // 使用 proposalCount 判断提案是否用尽（内部回合计数）
+  if (G.round >= G.proposalCount || G.ended) return;
+  renderDash();
+  let prop = G.proposals[G.round];
+  document.getElementById('prop-tag').textContent = prop.tag;
+  document.getElementById('prop-title').textContent = prop.title;
+  document.getElementById('prop-desc').textContent = prop.desc;
+  // 重置卡片位置
+  let card = document.getElementById('proposal-card');
+  card.classList.remove('swipe-left', 'swipe-right');
+  card.style.transform = '';
+  card.style.opacity = '1';
+}
+
+// ============================================================
+// 滑动/点击决策
+// ============================================================
+function swipe(choice) {
+  if (G.ended || G.showResult || _pendingFeedback) return;
+  if (G.round >= G.proposalCount) return;
+
+  let prop = G.proposals[G.round];
+  let card = document.getElementById('proposal-card');
+
+  // 动画
+  card.classList.add(choice === 'approve' ? 'swipe-right' : 'swipe-left');
+
+  // 记录决策
+  let approved = choice === 'approve';
+  G.phaseDecisions.push({ prop, approved });
+
+  // ===== 银锅锅触发处理（第21轮，G.round===20） =====
+  // 触发事件本身不影响数值，只决定后续4轮的填充
+  if (G.round === 20 && !G._silverPotResolved) {
+    G._silverPotResolved = true;
+    // 填充 slots 21-24（rounds 22-25）
+    let sp = [...SILVER_POT_CHAIN.slice(1)];
+    for (let i = sp.length - 1; i > 0; i--) { let j = Math.random() * (i+1) | 0; [sp[i], sp[j]] = [sp[j], sp[i]]; }
+    let fills = approved ? sp : G._rejectPool;
+    for (let i = 0; i < 4; i++) G.proposals[21 + i] = fills[i];
+  } else {
+    // 累积变化（支持批准和拒绝双向影响）
+    if (approved) {
+      G.currentDau += prop.dau ?? 0;
+      G.currentRep += prop.rep ?? 0;
+      G.currentGrind += prop.grind ?? 0;
+      G.currentFund += prop.fund ?? 0;
+      if (prop.hiddenEvent) {
+        G._pendingHiddenEvents = G._pendingHiddenEvents || [];
+        G._pendingHiddenEvents.push(prop.hiddenEvent);
+      }
+      // unlock链：同意后解锁后续关联事件
+      if (prop.unlocks && prop.unlocks.length > 0) {
+        G._pendingUnlocks = G._pendingUnlocks || [];
+        prop.unlocks.forEach(u => G._pendingUnlocks.push(u));
+      }
+    } else {
+      G.currentDau += prop.rejectDau ?? 0;
+      G.currentRep += prop.rejectRep ?? 0;
+      G.currentGrind += prop.rejectGrind ?? 0;
+      G.currentFund += prop.rejectFund ?? 0;
+    }
+  }
+
+  G.round++;
+
+  // 检查是否有即时反馈弹窗
+  if (prop.feedback) {
+    let fbText = approved ? prop.feedback.approve : (prop.feedback.reject || '你做出了你的选择。有时沉默比回应更有力量。');
+    setTimeout(() => showFeedback(fbText), 400);
+  } else {
+    continueAfterSwipe();
+  }
+}
+
+function continueAfterSwipe() {
+  // 注入unlock事件到后续回合
+  if (G._pendingUnlocks && G._pendingUnlocks.length > 0) {
+    for (let i = G.round; i < G.totalRounds; i++) {
+      if (G._pendingUnlocks.length === 0) break;
+      if (i === 20) continue; // 跳过银锅锅触发固定位
+      // 只替换普通提案位（前半段 rounds 1-19, 后半段 rounds 26+）
+      // 银锅锅后续位（22-25）如果已锁定也不替换
+      if (i < 21 || i >= 26 || (i >= 21 && i <= 25 && !G._silverPotResolved)) {
+        // 检查这个位置是否已有注入的unlock或链事件
+        let existing = G.proposals[i];
+        let isUnlock = existing && existing._isUnlock;
+        let isChain = i >= 21 && i <= 24 && G._silverPotResolved;
+        if (!isChain && !isUnlock) {
+          let unlock = G._pendingUnlocks.shift();
+          unlock._isUnlock = true;
+          G.proposals[i] = unlock;
+          break; // 每回合只注入一个
+        }
+      }
+    }
+  }
+
+  let inPhase = G.round % G.phaseSize;
+  let currentPhase = Math.floor(G.round / G.phaseSize);
+  if (inPhase === 0 && G.round > 0) {
+    setTimeout(() => showSettlement(), 300);
+  } else if (currentPhase >= G.totalRounds) {
+    // 已完成所有阶段，触发结局判定
+    setTimeout(() => determineEnding(), 300);
+  } else {
+    setTimeout(() => showProposal(), 300);
+  }
+}
+
+// 即时反馈弹窗
+let _pendingFeedback = false;
+
+function showFeedback(text) {
+  _pendingFeedback = true;
+  document.getElementById('fb-text').textContent = text;
+  document.getElementById('feedback-popup').classList.add('show');
+}
+
+function closeFeedback() {
+  document.getElementById('feedback-popup').classList.remove('show');
+  _pendingFeedback = false;
+  continueAfterSwipe();
+}
+
+// ============================================================
+// 结算系统（每5轮）
+// ============================================================
+function showSettlement() {
+  G.showResult = true;
+  let phaseDecisions = G.phaseDecisions;
+  let approved = phaseDecisions.filter(d => d.approved);
+  let rejected = phaseDecisions.filter(d => !d.approved);
+
+  // 优化后的结算：减小提案对增长的直接比例、引入运维成本并微调口碑/爆肝权重
+  // 基准增长（每阶段）
+  let baseGrowth = 14;
+  // 将提案给的 dau 值按比例折算为增长贡献，每点当前dau贡献1%增长率
+  let growthFromDecisions = Math.round(G.currentDau * 1.0);
+  let growthRate = baseGrowth + growthFromDecisions;
+
+  // 口碑乘数：更细分的分档，减小极端翻倍效果
+  let repMod = 1.0;
+  if (G.rep >= 65) repMod = 1.15;
+  else if (G.rep >= 60) repMod = 1.10;
+  else if (G.rep >= 50) repMod = 1.05;
+  else if (G.rep >= 40) repMod = 1.00;
+  else if (G.rep >= 30) repMod = 0.90;
+  else if (G.rep >= 20) repMod = 0.80;
+  else repMod = 0.60;
+  growthRate = Math.round(growthRate * repMod);
+
+  // 爆肝惩罚：只有在明显高爆肝时才强力惩罚
+  if (G.grind > 35) {
+    growthRate -= Math.round((G.grind - 35) * 0.7);
+  }
+
+  // 限制增长区间，避免单阶段增长过高或过低
+  growthRate = Math.max(-12, Math.min(70, Math.round(growthRate)));
+
+  let dauBefore = G.dau;
+  G.dau = Math.floor(G.dau * (1 + growthRate / 100));
+  G.dau = Math.max(1000, G.dau);
+
+  G.rep = Math.max(0, Math.min(100, G.rep + G.currentRep));
+  G.grind = Math.max(0, Math.min(100, G.grind + G.currentGrind));
+
+  // 运维成本：按当前日活抽取一定比例的日常开销，增加资金消耗的现实感
+  let opCost = Math.floor(G.dau * 0.05); // 每阶段消耗约 5% 的日活对应成本（可调）
+  G.fund = Math.max(0, G.fund + G.currentFund - opCost);
+
+  // 处理隐藏事件
+  let hiddenFeedback = '';
+  if (G._pendingHiddenEvents && G._pendingHiddenEvents.length > 0) {
+    G._pendingHiddenEvents.forEach(ev => {
+      if (ev.dau) G.dau = Math.floor(G.dau * (1 + ev.dau / 100));
+      if (ev.rep) G.rep = Math.max(0, Math.min(100, G.rep + ev.rep));
+      if (ev.grind) G.grind = Math.max(0, Math.min(100, G.grind + ev.grind));
+      if (ev.fund) G.fund = Math.max(0, G.fund + ev.fund);
+      hiddenFeedback += ev.text + '\n';
+    });
+    G._pendingHiddenEvents = [];
+  }
+
+  let period = Math.floor(G.round / G.phaseSize);
+  document.getElementById('settlement-period').textContent = `第 ${period} 次运营结算`;
+
+  // 生成本期反馈
+  let feedback = '';
+  if (approved.length > rejected.length) {
+    feedback += '🟢 你倾向于「同意」提案，这个月团队很忙碌。';
+  } else if (rejected.length > approved.length) {
+    feedback += '🔵 你倾向于「拒绝」提案，这个月团队在稳步观望。';
+  } else {
+    feedback += '🟡 你有选择地通过了一些提案，保持了平衡。';
+  }
+  feedback += '\n\n';
+
+  // 按指标生成反馈
+  let dauPct = growthRate >= 0 ? '+' + growthRate : growthRate;
+  if (growthRate > 5) feedback += `• 日活强劲增长（${dauPct}%），${formatNum(dauBefore)} → ${formatNum(G.dau)}，玩家基数在扩大。 🚀\n`;
+  else if (growthRate >= 0) feedback += `• 日活小幅增长（${dauPct}%），${formatNum(dauBefore)} → ${formatNum(G.dau)}，增长势头平稳。\n`;
+  else if (growthRate > -5) feedback += `• 日活略有下滑（${dauPct}%），需要关注用户留存。\n`;
+  else feedback += `• 日活显著下降（${dauPct}%），玩家在流失！ ⚠️\n`;
+
+  if (G.currentRep > 0) feedback += `• 玩家口碑改善（+${G.currentRep}），社区氛围向好。 ✨\n`;
+  else if (G.currentRep < 0) feedback += `• 口碑下滑（${G.currentRep}），玩家开始有怨言了。 ⚠️\n`;
+  else feedback += `• 口碑水平没有明显变化。\n`;
+
+  if (G.currentGrind > 0) feedback += `• 爆肝度上升（+${G.currentGrind}），玩家负担加重。\n`;
+  else if (G.currentGrind < 0) feedback += `• 爆肝度下降（${G.currentGrind}），玩家轻松了不少。 😌\n`;
+  else feedback += `• 爆肝程度保持稳定。\n`;
+
+  if (G.currentFund > 0) feedback += `• 资金流入（+${formatNum(G.currentFund)}），财务表现良好。 💰\n`;
+  else if (G.currentFund < 0) feedback += `• 资金支出（${formatNum(G.currentFund)}），预算需要控制。\n`;
+  else feedback += `• 收支基本平衡。\n`;
+
+  // 特殊事件
+  if (G.grind >= 70) feedback += `\n⚠️ 警告：爆肝度过高！玩家开始抱怨"跟上班一样"。`;
+  if (G.rep <= 20) feedback += `\n💀 口碑跌入谷底！社区正在失去信任。`;
+  if (G.fund <= 5000) feedback += `\n💰 资金紧张！需要开源节流。`;
+
+  let fbEl = document.getElementById('settlement-feedback');
+  let displayFeedback = feedback + (hiddenFeedback ? '\n' + hiddenFeedback : '');
+  fbEl.innerHTML = displayFeedback.replace(/\n/g, '<br>');
+
+  // 变化数值（日活显示增长率，其他为累计变化值）
+  let dauLabel = growthRate >= 0 ? '+' + growthRate + '%' : growthRate + '%';
+  let dauColor = growthRate > 5 ? 'var(--green)' : growthRate >= 0 ? 'var(--text2)' : 'var(--red)';
+  let changesHtml = `
+    <div class="item"><div class="label">日活增长率</div><div class="num" style="color:${dauColor}">${dauLabel}</div></div>
+    <div class="item"><div class="label">口碑</div><div class="num" style="color:${G.currentRep >= 0 ? 'var(--green)' : 'var(--red)'}">${G.currentRep >= 0 ? '+' : ''}${G.currentRep}</div></div>
+    <div class="item"><div class="label">爆肝</div><div class="num" style="color:${G.currentGrind > 0 ? 'var(--red)' : G.currentGrind < 0 ? 'var(--green)' : 'var(--text)'}">${G.currentGrind >= 0 ? '+' : ''}${G.currentGrind}</div></div>
+    <div class="item"><div class="label">资金变动</div><div class="num" style="color:${(G.currentFund - opCost) >= 0 ? 'var(--green)' : 'var(--red)'}">${(G.currentFund - opCost) >= 0 ? '+' : ''}${formatNum(G.currentFund - opCost)}</div></div>
+    <div class="item"><div class="label">运维成本</div><div class="num" style="color:var(--text2)">-${formatNum(opCost)}</div></div>
+  `;
+  document.getElementById('settlement-changes').innerHTML = changesHtml;
+
+  // 重置累积值
+  G.currentDau = 0;
+  G.currentRep = 0;
+  G.currentGrind = 0;
+  G.currentFund = 0;
+  G.phaseDecisions = [];
+
+  renderDash();
+  document.getElementById('settlement').classList.add('show');
+}
+
+function closeSettlement() {
+  document.getElementById('settlement').classList.remove('show');
+  G.showResult = false;
+
+  let currentPhase = Math.floor(G.round / G.phaseSize);
+  if (currentPhase >= G.totalRounds) {
+    determineEnding();
+  } else {
+    showProposal();
+  }
+}
+
+// ============================================================
+// 结局
+// ============================================================
+const ENDINGS = {
+  HIDDEN: { id:'END_HIDDEN', title:'真·顶级制作人', badge:'🏆', desc:'热度、口碑、商业化达到了完美的平衡。你的游戏既叫好又叫座，玩家心甘情愿地留下来，公司也赚得盆满钵满。这，就是顶级策划的实力。' },
+  HOME: { id:'END_HOME', title:'第二故乡', badge:'🏡', desc:'玩家不再是为了打卡而上线——他们是真的想回来看看。你的游戏成了很多人生活的一部分，一个随时可以回去的家。' },
+  GOOD: { id:'END_GOOD', title:'心流自愿', badge:'🎉', desc:'你的游戏让玩家感到"不累"，日活健康增长，口碑稳步上升。这就是可持续运营。' },
+  LOVEHATE: { id:'END_LOVEHATE', title:'被绑架的热爱', badge:'🔥', desc:'玩家一边骂太肝了，一边忍不住上线——你的游戏让他们又爱又恨。这种热度能维持多久，你心里也没底。' },
+  NICHE: { id:'END_NICHE', title:'曲高和寡', badge:'🎭', desc:'口碑极佳，但玩的人寥寥无几——"叫好不叫座"。你翻着评论区的"神作"评价，看着可怜的DAU数据，陷入了沉思。' },
+  NORMAL: { id:'END_NORMAL', title:'平淡是真', badge:'👍', desc:'数据合格，但总觉得少了点什么。玩家还在，热情却不死当年了。' },
+  BAD: { id:'END_BAD', title:'温水煮青蛙', badge:'💔', desc:'游戏还在运行，但你已经感觉到了下坡路的加速度。' },
+  CRASH_REP: { id:'END_CRASH_REP', title:'众叛亲离', badge:'💀', desc:'口碑崩盘，玩家用脚投票。你看着1.2分的评分，想起了上一世的自己。' },
+  CRASH_GRIND: { id:'END_CRASH_GRIND', title:'爆肝地狱', badge:'☠️', desc:'日常任务堆成山，玩家终于崩溃了。"我到底是在玩游戏还是在上夜班？"' },
+  CRASH_FUND: { id:'END_CRASH_FUND', title:'资金断裂', badge:'💸', desc:'资金链断了，明天服务器就要到期了。' },
+};
+
+function determineEnding() {
+  if (G.ended) return;
+  G.ended = true;
+
+  let endingId;
+  // 改进后的结局判定：更平滑的门槛，资金和爆肝也更易影响结局
+  if (G.rep >= 58 && G.dau >= 30000 && G.grind <= 38 && G.fund >= 18000) endingId = 'END_HIDDEN';
+  else if (G.rep >= 56 && G.dau >= 29000 && G.grind <= 44) endingId = 'END_HOME';
+  else if (G.rep >= 52 && G.dau >= 25000 && G.grind <= 40) endingId = 'END_GOOD';
+  else if (G.rep >= 42 && G.dau >= 20000) endingId = 'END_LOVEHATE';
+  else if (G.rep >= 58 && G.dau < 18000) endingId = 'END_NICHE';
+  else if (G.rep <= 20) endingId = 'END_CRASH_REP';
+  else if (G.grind >= 75) endingId = 'END_CRASH_GRIND';
+  else if (G.fund <= 1000) endingId = 'END_CRASH_FUND';
+  else if (G.dau >= 20000) endingId = 'END_NORMAL';
+  else endingId = 'END_BAD';
+
+  G.endingId = endingId;
+  let end = ENDINGS[endingId.replace('END_','')] || ENDINGS.NORMAL;
+
+  document.getElementById('ending-badge').textContent = end.badge;
+  document.getElementById('ending-title').textContent = end.title;
+  document.getElementById('ending-id').textContent = `结局编号: ${end.id}`;
+  document.getElementById('ending-desc').textContent = end.desc;
+
+  let statsHtml = `
+    <div class="ending-stat"><div class="label">最终日活</div><div class="value" style="color:var(--gold)">${formatNum(G.dau)}</div></div>
+    <div class="ending-stat"><div class="label">最终口碑</div><div class="value" style="color:${G.rep >= 55 ? 'var(--green)' : 'var(--red)'}">${G.rep}</div></div>
+    <div class="ending-stat"><div class="label">爆肝强度</div><div class="value" style="color:${G.grind > 60 ? 'var(--red)' : 'var(--green)'}">${G.grind}</div></div>
+    <div class="ending-stat"><div class="label">剩余资金</div><div class="value">${formatNum(G.fund)}</div></div>
+  `;
+  document.getElementById('ending-stats').innerHTML = statsHtml;
+
+  // 预留接口：达成率
+  document.getElementById('ending-pct').textContent = '--';
+
+  document.getElementById('game').classList.remove('show');
+  document.getElementById('ending').classList.add('show');
+}
+
+// ============================================================
+// 开场 & 标题
+// ============================================================
+const OPENING_TEXT = `上一世，你负责的游戏由于任务过于繁重，
+玩家吐槽"像上班"，纷纷退游，
+游戏在一周年前一天关服跑路。
+
+在被扫地出门前，你两眼一黑，
+再睁眼，竟穿越回了开服的前一天！
+
+这一世，你一定不要重蹈覆辙，
+你一定要做顶级策划！`;
+
+let openingTimer = null;
+let skipFlag = false;
+
+function showOpening() {
+  let screen = document.getElementById('opening');
+  screen.classList.add('show');
+  typeText(0);
+}
+
+function typeText(idx) {
+  if (skipFlag) return;
+  let el = document.getElementById('opening-text');
+  if (idx <= OPENING_TEXT.length) {
+    el.innerHTML = OPENING_TEXT.substring(0, idx) + '<span class="cursor">|</span>';
+    openingTimer = setTimeout(() => typeText(idx + 1), 30);
+  } else {
+    el.innerHTML = OPENING_TEXT;
+    setTimeout(() => { if (!skipFlag) goToTitle(); }, 1200);
+  }
+}
+
+function skipOpening() {
+  skipFlag = true;
+  if (openingTimer) clearTimeout(openingTimer);
+  goToTitle();
+}
+
+function goToTitle() {
+  let screen = document.getElementById('opening');
+  screen.classList.add('hide');
+  setTimeout(() => {
+    screen.classList.remove('show', 'hide');
+    document.getElementById('title').classList.add('show');
+    setTimeout(() => document.getElementById('name-input').focus(), 200);
+  }, 400);
+}
+
+function startGame() {
+  let name = document.getElementById('name-input').value.trim() || '天才策划';
+  initState(name);
+  document.getElementById('title').classList.remove('show');
+  document.getElementById('game').classList.add('show');
+  renderDash();
+  showTutorial();
+}
+
+function showTutorial() {
+  document.getElementById('tutorial').classList.add('show');
+}
+
+function closeTutorial() {
+  document.getElementById('tutorial').classList.remove('show');
+  showProposal();
+}
+
+function restartGame() {
+  document.getElementById('ending').classList.remove('show');
+  document.getElementById('game').classList.remove('show');
+  document.getElementById('title').classList.add('show');
+  document.getElementById('name-input').focus();
+}
+
+// ============================================================
+// 手机触屏滑动支持
+// ============================================================
+let _touchStartX = 0;
+let _touchStartY = 0;
+let _touchMoved = false;
+
+function initSwipe() {
+  let card = document.getElementById('proposal-card');
+  card.addEventListener('touchstart', function(e) {
+    if (G.ended || G.showResult || _pendingFeedback) return;
+    _touchStartX = e.touches[0].clientX;
+    _touchStartY = e.touches[0].clientY;
+    _touchMoved = false;
+    // 移除之前的过渡，让拖拽跟随手指
+    this.style.transition = 'none';
+  }, { passive: true });
+
+  card.addEventListener('touchmove', function(e) {
+    if (G.ended || G.showResult || _pendingFeedback) return;
+    if (_touchStartX === 0) return;
+    let dx = e.touches[0].clientX - _touchStartX;
+    let dy = e.touches[0].clientY - _touchStartY;
+    // 只处理水平滑动（排除垂直滚动）
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+      _touchMoved = true;
+      // 跟随手指位移 + 旋转
+      let rotate = Math.max(-20, Math.min(20, dx / 8));
+      this.style.transform = `translateX(${dx}px) rotate(${rotate}deg)`;
+      // 边界色提示
+      if (dx > 30) {
+        this.style.borderColor = 'var(--green)';
+      } else if (dx < -30) {
+        this.style.borderColor = 'var(--red)';
+      } else {
+        this.style.borderColor = 'rgba(255,255,255,0.06)';
+      }
+    }
+  }, { passive: true });
+
+  card.addEventListener('touchend', function(e) {
+    if (G.ended || G.showResult || _pendingFeedback) return;
+    this.style.transition = '';
+    this.style.borderColor = 'rgba(255,255,255,0.06)';
+    if (!_touchMoved) return;
+    let dx = (e.changedTouches[0].clientX - _touchStartX);
+    // 滑动距离超过80px判定为有效滑动
+    if (dx > 80) {
+      swipe('approve');
+    } else if (dx < -80) {
+      swipe('reject');
+    } else {
+      // 复位
+      this.style.transform = '';
+      this.style.opacity = '1';
+    }
+    _touchStartX = 0;
+    _touchStartY = 0;
+    _touchMoved = false;
+  }, { passive: true });
+}
+
+// ============================================================
+// 启动
+// ============================================================
+window.onload = function() {
+  initSwipe();
+  showOpening();
+};
+</script>
+</body>
+</html>
