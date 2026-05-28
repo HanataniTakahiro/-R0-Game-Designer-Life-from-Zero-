@@ -626,7 +626,7 @@ const PROPOSALS = [
   { title:'针对玩家退坑长文公开回应', desc:'老玩家写了《致策划的一封信》，字字泣血，转发10万+，每个群都在传。你看到一半放下了手机。', tag:'公关', dau:-2, rep:10, grind:2, fund:-300, rejectDau:-5, rejectRep:-10,
     feedback:{ approve:'整个策划组手写了一封公开信，老玩家积极回应。社区里很多玩家开始晒自己的游戏回忆，评论区一片泪目。', reject:'事件持续发酵。你刷了一下数据面板——日活和口碑都在急速下滑，但更让你难受的是那封信里的最后一句话。' } },
   { title:'推出可攻略NPC结婚系统', desc:'每个NPC独立好感度剧情可以告白结婚（策划组被美工刀了）', tag:'内容', dau:5, rep:8, grind:7, fund:-1200, rejectDau:-3, rejectRep:-8 },
-  { title:'新角色数值膨胀开服100倍上线', desc:'为了刺激流水新角色数值全面碾压，老角色变成下水道', tag:'内容', dau:2, rep:-10, grind:5, fund:1600, rejectDau:-3, rejectRep:8, rejectGrind:2, rejectFund:-1000 },
+  { title:'新角色的数值膨胀100倍', desc:'为了刺激流水新角色数值全面碾压', tag:'内容', dau:2, rep:-10, grind:5, fund:1600, rejectDau:-3, rejectRep:8, rejectGrind:2, rejectFund:-1000 },
   { title:'引入AI辅助美术，裁掉一半原画师', desc:'AI产出角色立绘效率惊人，但美术组表示"这是对艺术的背叛"。上线后玩家可能看不出区别，也可能一眼识破。', tag:'内容', dau:3, rep:-3, grind:-2, fund:-800, rejectDau:-1, rejectRep:6, rejectGrind:2, rejectFund:200,
     unlocks:[{ title:'AI立绘翻车事件公开致歉', desc:'新版本立绘被扒出AI生成，手指数量不对成为鬼畜素材', tag:'技术', dau:2, rep:8, grind:4, fund:-800, rejectDau:3, rejectRep:-10, rejectGrind:2,
       feedback:{ approve:'致歉信发布后，玩家态度软化——"敢承认就还行"。二创作者开始做六根手指的搞笑手书，反向出圈。', reject:'你说这是"艺术风格"，玩家笑了。鬼畜视频播放量破百万，你的名言被做成了表情包。' } }],
@@ -1064,11 +1064,11 @@ function determineEnding() {
 
   let endingId;
   // 改进后的结局判定：更平滑的门槛，资金和爆肝也更易影响结局
-  if (G.rep >= 58 && G.dau >= 30000 && G.grind <= 38 && G.fund >= 18000) endingId = 'END_HIDDEN';
-  else if (G.rep >= 56 && G.dau >= 29000 && G.grind <= 44) endingId = 'END_HOME';
-  else if (G.rep >= 52 && G.dau >= 25000 && G.grind <= 40) endingId = 'END_GOOD';
-  else if (G.rep >= 42 && G.dau >= 20000) endingId = 'END_LOVEHATE';
-  else if (G.rep >= 58 && G.dau < 18000) endingId = 'END_NICHE';
+  if (G.rep >= 58 && G.dau >= 35000 && G.grind <= 38 && G.fund >= 18000) endingId = 'END_HIDDEN';
+  else if (G.rep >= 56 && G.dau >= 35000 && G.grind <= 44) endingId = 'END_HOME';
+  else if (G.rep >= 52 && G.dau >= 30000 && G.grind <= 40) endingId = 'END_GOOD';
+  else if (G.rep >= 42 && G.dau >= 28000 && G.grind > 45) endingId = 'END_LOVEHATE';
+  else if (G.rep >= 58 && G.dau < 20000) endingId = 'END_NICHE';
   else if (G.rep <= 20) endingId = 'END_CRASH_REP';
   else if (G.grind >= 75) endingId = 'END_CRASH_GRIND';
   else if (G.fund <= 1000) endingId = 'END_CRASH_FUND';
