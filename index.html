@@ -779,6 +779,7 @@ function swipe(choice) {
   if (G.round >= G.proposalCount) return;
 
   let prop = G.proposals[G.round];
+  let currentRound = G.round; // 保存当前回合数（用于上报）
   let card = document.getElementById('proposal-card');
 
   // 动画
@@ -820,6 +821,18 @@ function swipe(choice) {
       G.currentFund += prop.rejectFund ?? 0;
     }
   }
+
+  // ============================================================
+  // 数据监测上报
+  // ============================================================
+  // 1. 检查是否为需要监测的事件（银锅锅事件链或扶持新团队提案）
+  const eventCode = getEventCode(prop);
+  if (eventCode) {
+    reportEvent(eventCode, prop.title, choice, currentRound + 1);
+  }
+  
+  // 2. 上报所有决策数据
+  reportDecision(prop, choice, currentRound + 1);
 
   G.round++;
 
@@ -1054,6 +1067,11 @@ function determineEnding() {
   G.endingId = endingId;
   let end = ENDINGS[endingId.replace('END_','')] || ENDINGS.NORMAL;
 
+  // ============================================================
+  // 数据监测上报：结局数据
+  // ============================================================
+  reportEnding(end.id, end.title);
+
   document.getElementById('ending-badge').textContent = end.badge;
   document.getElementById('ending-title').textContent = end.title;
   document.getElementById('ending-id').textContent = `结局编号: ${end.id}`;
@@ -1131,6 +1149,8 @@ function startGame() {
   document.getElementById('game').classList.add('show');
   renderDash();
   showTutorial();
+  // 创建监测系统会话
+  createPlayerSession(name);
 }
 
 function showTutorial() {
@@ -1209,6 +1229,140 @@ function initSwipe() {
     _touchStartY = 0;
     _touchMoved = false;
   }, { passive: true });
+}
+
+// ============================================================
+// 数据监测系统（实时上报）
+// ============================================================
+const MONITOR_API = 'http://localhost:3000/api'; // 后端API地址
+
+let _monitorSessionId = null;
+let _monitorPlayerId = null;
+
+// 创建玩家会话
+async function createPlayerSession(playerName) {
+  try {
+    const response = await fetch(`${MONITOR_API}/player`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ playerName })
+    });
+    const data = await response.json();
+    if (data.success) {
+      _monitorSessionId = data.sessionId;
+      _monitorPlayerId = data.playerId;
+      console.log('监测系统 - 玩家会话创建成功:', _monitorSessionId);
+    }
+  } catch (error) {
+    console.warn('监测系统 - 创建会话失败:', error);
+  }
+}
+
+// 上报结局数据
+async function reportEnding(endingId, endingTitle) {
+  if (!_monitorSessionId) return;
+  
+  try {
+    await fetch(`${MONITOR_API}/ending`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: _monitorSessionId,
+        endingId,
+        endingTitle,
+        finalDau: G.dau,
+        finalRep: G.rep,
+        finalGrind: G.grind,
+        finalFund: G.fund,
+        roundCount: G.round
+      })
+    });
+    console.log('监测系统 - 结局数据上报成功:', endingId);
+  } catch (error) {
+    console.warn('监测系统 - 上报结局失败:', error);
+  }
+}
+
+// 上报事件链数据
+async function reportEvent(eventCode, eventTitle, choice, roundNumber) {
+  if (!_monitorSessionId) return;
+  
+  try {
+    await fetch(`${MONITOR_API}/event`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: _monitorSessionId,
+        eventCode,
+        eventTitle,
+        choice,
+        roundNumber
+      })
+    });
+    console.log('监测系统 - 事件数据上报成功:', eventCode, choice);
+  } catch (error) {
+    console.warn('监测系统 - 上报事件失败:', error);
+  }
+}
+
+// 上报决策数据
+async function reportDecision(proposal, choice, roundNumber) {
+  if (!_monitorSessionId) return;
+  
+  try {
+    const change = choice === 'approve' 
+      ? { dau: proposal.dau, rep: proposal.rep, grind: proposal.grind, fund: proposal.fund }
+      : { dau: proposal.rejectDau, rep: proposal.rejectRep, grind: proposal.rejectGrind, fund: proposal.rejectFund };
+    
+    await fetch(`${MONITOR_API}/decision`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: _monitorSessionId,
+        roundNumber,
+        proposalTitle: proposal.title,
+        proposalTag: proposal.tag,
+        choice,
+        dauChange: change.dau || 0,
+        repChange: change.rep || 0,
+        grindChange: change.grind || 0,
+        fundChange: change.fund || 0
+      })
+    });
+    console.log('监测系统 - 决策数据上报成功:', roundNumber, choice);
+  } catch (error) {
+    console.warn('监测系统 - 上报决策失败:', error);
+  }
+}
+
+// 获取事件编号（银锅锅事件链 + 扶持新团队提案）
+function getEventCode(proposal) {
+  if (!proposal.title) return null;
+  
+  // 银锅锅事件链编号
+  const silverPotPatterns = [
+    { code: 'SILVER_POT_0', keyword: '银锅锅之战' },
+    { code: 'SILVER_POT_1', keyword: '免费福利.*7天' },
+    { code: 'SILVER_POT_2', keyword: '联名宣传PV' },
+    { code: 'SILVER_POT_3', keyword: '主题线下快闪店' },
+    { code: 'SILVER_POT_4', keyword: '限定道具高价抽奖' },
+    { code: 'SILVER_POT_5', keyword: '限定语音包' },
+    { code: 'SILVER_POT_6', keyword: '服务器扩容' },
+    { code: 'SILVER_POT_7', keyword: '限定通行证' }
+  ];
+  
+  for (const { code, keyword } of silverPotPatterns) {
+    if (proposal.title.match(keyword)) {
+      return code;
+    }
+  }
+  
+  // 扶持新团队提案
+  if (proposal.title.includes('《重生之我要当顶级策划》')) {
+    return 'NEW_TEAM_SUPPORT';
+  }
+  
+  return null;
 }
 
 // ============================================================

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>游戏实时监测系统</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: linear-gradient(135deg, #0a0e1a 0%, #1a2133 100%);
+      min-height: 100vh;
+      color: #e2e8f0;
+    }
+
+    .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+    /* 头部 */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .header h1 { font-size: 28px; color: #f0c040; font-weight: 700; }
+    .header .refresh-btn {
+      background: linear-gradient(135deg, #f0c040, #d4a800);
+      border: none;
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #1a1a2e;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .header .refresh-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(255,215,0,0.3); }
+    .header .last-update { font-size: 12px; color: #64748b; }
+
+    /* 统计卡片 */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: linear-gradient(145deg, #1a2133, #141c2b);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .stat-card .label { font-size: 12px; color: #94a3b8; margin-bottom: 8px; }
+    .stat-card .value { font-size: 32px; font-weight: 700; color: #f0c040; }
+    .stat-card .change { font-size: 12px; margin-top: 4px; }
+    .stat-card .change.up { color: #22c55e; }
+    .stat-card .change.down { color: #ef4444; }
+
+    /* 表格容器 */
+    .table-container {
+      background: linear-gradient(145deg, #1a2133, #141c2b);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid rgba(255,255,255,0.06);
+      margin-bottom: 24px;
+    }
+    .table-container h2 {
+      font-size: 18px;
+      margin-bottom: 16px;
+      color: #f0c040;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    th {
+      font-size: 12px;
+      color: #94a3b8;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    td { font-size: 14px; color: #e2e8f0; }
+    tr:hover { background: rgba(255,255,255,0.02); }
+
+    /* 进度条 */
+    .progress-bar {
+      height: 8px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s;
+    }
+    .progress-fill.approve { background: linear-gradient(90deg, #22c55e, #4ade80); }
+    .progress-fill.reject { background: linear-gradient(90deg, #ef4444, #f87171); }
+
+    /* 结局徽章 */
+    .ending-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .ending-badge.hidden { background: rgba(255,215,0,0.2); color: #f0c040; }
+    .ending-badge.home { background: rgba(34,197,94,0.2); color: #22c55e; }
+    .ending-badge.good { background: rgba(59,130,246,0.2); color: #3b82f6; }
+    .ending-badge.lovehate { background: rgba(245,158,11,0.2); color: #f59e0b; }
+    .ending-badge.niche { background: rgba(139,92,246,0.2); color: #8b5cf6; }
+    .ending-badge.normal { background: rgba(148,163,184,0.2); color: #94a3b8; }
+    .ending-badge.bad { background: rgba(239,68,68,0.2); color: #ef4444; }
+
+    /* 事件标签 */
+    .event-tag {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .event-tag.silver { background: rgba(192,132,252,0.2); color: #c084fc; }
+    .event-tag.team { background: rgba(6,182,212,0.2); color: #06b6d4; }
+
+    /* 响应式 */
+    @media (max-width: 1024px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 640px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .header { flex-direction: column; gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎮 游戏实时监测系统</h1>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span class="last-update" id="last-update">最后更新: --</span>
+        <button class="refresh-btn" onclick="refreshData()">🔄 刷新数据</button>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="label">总玩家数</div>
+        <div class="value" id="stat-players">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">总结局数</div>
+        <div class="value" id="stat-endings">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">事件触发数</div>
+        <div class="value" id="stat-events">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">决策记录数</div>
+        <div class="value" id="stat-decisions">--</div>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <h2>📊 结局统计</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>结局编号</th>
+            <th>结局名称</th>
+            <th>达成次数</th>
+            <th>占比</th>
+            <th>平均日活</th>
+            <th>平均口碑</th>
+            <th>平均爆肝</th>
+          </tr>
+        </thead>
+        <tbody id="ending-table-body"></tbody>
+      </table>
+    </div>
+
+    <div class="table-container">
+      <h2>🎯 事件链统计（银锅锅联动 + 扶持新团队）</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>事件编号</th>
+            <th>事件标题</th>
+            <th>触发总数</th>
+            <th>同意数</th>
+            <th>拒绝数</th>
+            <th>同意率</th>
+            <th>趋势</th>
+          </tr>
+        </thead>
+        <tbody id="event-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = '/api';
+
+    async function fetchData(url) {
+      try {
+        const response = await fetch(API_BASE + url);
+        const data = await response.json();
+        return data.success ? data.data : null;
+      } catch (error) {
+        console.error('获取数据失败:', error);
+        return null;
+      }
+    }
+
+    async function refreshData() {
+      await Promise.all([
+        loadOverview(),
+        loadEndings(),
+        loadEvents()
+      ]);
+      document.getElementById('last-update').textContent = '最后更新: ' + new Date().toLocaleString('zh-CN');
+    }
+
+    async function loadOverview() {
+      const data = await fetchData('/stats/overview');
+      if (data) {
+        document.getElementById('stat-players').textContent = data.totalPlayers.toLocaleString();
+        document.getElementById('stat-endings').textContent = data.totalEndings.toLocaleString();
+        document.getElementById('stat-events').textContent = data.totalEvents.toLocaleString();
+        document.getElementById('stat-decisions').textContent = data.totalDecisions.toLocaleString();
+      }
+    }
+
+    async function loadEndings() {
+      const data = await fetchData('/stats/endings');
+      const tbody = document.getElementById('ending-table-body');
+      
+      if (!data) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#64748b;">暂无数据</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.map(row => {
+        const badgeClass = getEndingBadgeClass(row.ending_id);
+        return `
+          <tr>
+            <td><span class="ending-badge ${badgeClass}">${row.ending_id.replace('END_','')}</span></td>
+            <td>${row.ending_title}</td>
+            <td style="font-weight:600;">${row.total_count}</td>
+            <td>${row.percentage}%</td>
+            <td>${Math.round(row.avg_dau).toLocaleString()}</td>
+            <td>${Math.round(row.avg_rep)}</td>
+            <td>${Math.round(row.avg_grind)}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function loadEvents() {
+      const data = await fetchData('/stats/events');
+      const tbody = document.getElementById('event-table-body');
+      
+      if (!data) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#64748b;">暂无数据</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.map(row => {
+        const tagClass = row.event_code.startsWith('SILVER_POT') ? 'silver' : 'team';
+        const tagLabel = row.event_code.startsWith('SILVER_POT') ? '银锅锅' : '新团队';
+        return `
+          <tr>
+            <td>
+              <span class="event-tag ${tagClass}">${tagLabel}</span>
+              <br><span style="font-size:11px;color:#64748b;">${row.event_code}</span>
+            </td>
+            <td style="max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${row.event_title}</td>
+            <td style="font-weight:600;">${row.total_triggers}</td>
+            <td style="color:#22c55e;">${row.approve_count}</td>
+            <td style="color:#ef4444;">${row.reject_count}</td>
+            <td>${row.approve_rate}%</td>
+            <td>
+              <div class="progress-bar">
+                <div class="progress-fill approve" style="width:${row.approve_rate}%"></div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function getEndingBadgeClass(endingId) {
+      const id = endingId.replace('END_','').toLowerCase();
+      const classes = {
+        'hidden': 'hidden',
+        'home': 'home',
+        'good': 'good',
+        'lovehate': 'lovehate',
+        'niche': 'niche',
+        'normal': 'normal'
+      };
+      return classes[id] || 'bad';
+    }
+
+    // 页面加载时自动刷新数据
+    document.addEventListener('DOMContentLoaded', () => {
+      refreshData();
+      // 每30秒自动刷新
+      setInterval(refreshData, 30000);
+    });
+  </script>
+</body>
+</html>
