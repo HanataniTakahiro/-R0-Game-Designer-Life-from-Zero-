@@ -1063,12 +1063,12 @@ function determineEnding() {
   G.ended = true;
 
   let endingId;
-  // 改进后的结局判定：更平滑的门槛，资金和爆肝也更易影响结局
-  if (G.rep >= 58 && G.dau >= 35000 && G.grind <= 38 && G.fund >= 18000) endingId = 'END_HIDDEN';
-  else if (G.rep >= 56 && G.dau >= 35000 && G.grind <= 44) endingId = 'END_HOME';
-  else if (G.rep >= 52 && G.dau >= 30000 && G.grind <= 40) endingId = 'END_GOOD';
-  else if (G.rep >= 42 && G.dau >= 28000 && G.grind > 45) endingId = 'END_LOVEHATE';
-  else if (G.rep >= 58 && G.dau < 20000) endingId = 'END_NICHE';
+  // 改进后的结局判定：调整门槛，使结局占比接近1:3:7:6:6
+  if (G.rep >= 80 && G.dau >= 35000 && G.grind <= 70 || G.fund >= 30000 && G.dau >= 32000 && G.rep >= 60) endingId = 'END_HIDDEN';
+  else if (G.rep >= 70 && G.dau >= 25000 && G.grind <= 70) endingId = 'END_HOME';
+  else if (G.rep >= 55 && G.dau >= 25000 && G.grind <= 70) endingId = 'END_GOOD';
+  else if (G.rep >= 55 && G.dau >= 26000 && G.grind > 70) endingId = 'END_LOVEHATE';
+  else if (G.rep >= 75 && G.dau < 26000) endingId = 'END_NICHE';
   else if (G.rep <= 20) endingId = 'END_CRASH_REP';
   else if (G.grind >= 75) endingId = 'END_CRASH_GRIND';
   else if (G.fund <= 1000) endingId = 'END_CRASH_FUND';
