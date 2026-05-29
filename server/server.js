@@ -2,7 +2,8 @@ const express = require('express');
 const { Pool } = require('pg');
 const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -244,6 +245,20 @@ app.get('/api/stats/overview', async (req, res) => {
  */
 app.get('/api/health', (req, res) => {
   res.json({ success: true, status: 'ok', timestamp: new Date().toISOString() });
+});
+
+/**
+ * 数据库健康检查
+ * GET /api/health/db
+ */
+app.get('/api/health/db', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ success: true, status: 'ok', database: 'connected' });
+  } catch (error) {
+    console.error('数据库健康检查失败:', error);
+    res.status(500).json({ success: false, status: 'error', database: 'disconnected' });
+  }
 });
 
 // 启动服务器
