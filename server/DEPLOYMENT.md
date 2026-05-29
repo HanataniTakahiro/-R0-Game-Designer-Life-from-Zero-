@@ -94,11 +94,15 @@ npm start
 
 ### 4. 前端配置
 
-修改 `index.html` 中的 API 地址：
+默认推荐同源部署：前端页面与 API 走同一域名，前端使用 `/api`。
 
-```javascript
-const MONITOR_API = 'http://your-server-ip:3001/api';
-```
+如果前后端不在同一域名，可在页面地址后添加参数临时指定 API：
+
+`?api=https://your-api-domain/api`
+
+例如：
+
+`https://your-game-domain.com/?api=https://your-api-domain.com/api`
 
 ### 5. 监测面板
 

@@ -1245,7 +1245,11 @@ function initSwipe() {
 // ============================================================
 // 数据监测系统（实时上报）
 // ============================================================
-const MONITOR_API = 'http://localhost:3001/api'; // 后端API地址
+// 优先使用同源 /api，避免线上 localhost 指向用户本机及 HTTPS 混合内容问题
+// 可通过 ?api=https://your-api-domain/api 临时覆盖，便于线上排查
+const __apiFromQuery = new URLSearchParams(window.location.search).get('api');
+const MONITOR_API_RAW = (window.MONITOR_API_BASE && String(window.MONITOR_API_BASE).trim()) || (__apiFromQuery && String(__apiFromQuery).trim()) || '/api';
+const MONITOR_API = MONITOR_API_RAW.replace(/\/+$/, '');
 
 let _monitorSessionId = null;
 let _monitorPlayerId = null;
@@ -1258,6 +1262,10 @@ async function createPlayerSession(playerName) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ playerName })
     });
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`HTTP ${response.status} ${response.statusText}: ${errText}`);
+    }
     const data = await response.json();
     if (data.success) {
       _monitorSessionId = data.sessionId;
@@ -1274,7 +1282,7 @@ async function reportEnding(endingId, endingTitle) {
   if (!_monitorSessionId) return;
   
   try {
-    await fetch(`${MONITOR_API}/ending`, {
+    const response = await fetch(`${MONITOR_API}/ending`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1288,6 +1296,10 @@ async function reportEnding(endingId, endingTitle) {
         roundCount: G.round
       })
     });
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`HTTP ${response.status} ${response.statusText}: ${errText}`);
+    }
     console.log('监测系统 - 结局数据上报成功:', endingId);
   } catch (error) {
     console.warn('监测系统 - 上报结局失败:', error);
@@ -1299,7 +1311,7 @@ async function reportEvent(eventCode, eventTitle, choice, roundNumber) {
   if (!_monitorSessionId) return;
   
   try {
-    await fetch(`${MONITOR_API}/event`, {
+    const response = await fetch(`${MONITOR_API}/event`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1310,6 +1322,10 @@ async function reportEvent(eventCode, eventTitle, choice, roundNumber) {
         roundNumber
       })
     });
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`HTTP ${response.status} ${response.statusText}: ${errText}`);
+    }
     console.log('监测系统 - 事件数据上报成功:', eventCode, choice);
   } catch (error) {
     console.warn('监测系统 - 上报事件失败:', error);
@@ -1325,7 +1341,7 @@ async function reportDecision(proposal, choice, roundNumber) {
       ? { dau: proposal.dau, rep: proposal.rep, grind: proposal.grind, fund: proposal.fund }
       : { dau: proposal.rejectDau, rep: proposal.rejectRep, grind: proposal.rejectGrind, fund: proposal.rejectFund };
     
-    await fetch(`${MONITOR_API}/decision`, {
+    const response = await fetch(`${MONITOR_API}/decision`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1340,6 +1356,10 @@ async function reportDecision(proposal, choice, roundNumber) {
         fundChange: change.fund || 0
       })
     });
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`HTTP ${response.status} ${response.statusText}: ${errText}`);
+    }
     console.log('监测系统 - 决策数据上报成功:', roundNumber, choice);
   } catch (error) {
     console.warn('监测系统 - 上报决策失败:', error);
