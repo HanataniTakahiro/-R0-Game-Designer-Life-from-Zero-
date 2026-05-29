@@ -1058,7 +1058,7 @@ const ENDINGS = {
   CRASH_FUND: { id:'END_CRASH_FUND', title:'资金断裂', badge:'💸', desc:'资金链要断了，最后一个月每天送一百抽，最后的狂欢！' },
 };
 
-function determineEnding() {
+async function determineEnding() {
   if (G.ended) return;
   G.ended = true;
 
@@ -1081,7 +1081,7 @@ function determineEnding() {
   // ============================================================
   // 数据监测上报：结局数据
   // ============================================================
-  reportEnding(end.id, end.title);
+  await reportEnding(end.id, end.title);
 
   document.getElementById('ending-badge').textContent = end.badge;
   document.getElementById('ending-title').textContent = end.title;
@@ -1096,8 +1096,22 @@ function determineEnding() {
   `;
   document.getElementById('ending-stats').innerHTML = statsHtml;
 
-  // 预留接口：达成率
-  document.getElementById('ending-pct').textContent = '--';
+  // 从统计接口回填该结局的真实达成率
+  let endingPctText = '--';
+  try {
+    const response = await fetch(`${MONITOR_API}/stats/endings`);
+    if (response.ok) {
+      const result = await response.json();
+      const rows = Array.isArray(result.data) ? result.data : [];
+      const matched = rows.find(row => row.ending_id === end.id);
+      if (matched && matched.percentage != null) {
+        endingPctText = Number(matched.percentage).toFixed(1).replace(/\.0$/, '');
+      }
+    }
+  } catch (error) {
+    console.warn('获取结局达成率失败:', error);
+  }
+  document.getElementById('ending-pct').textContent = endingPctText;
 
   document.getElementById('game').classList.remove('show');
   document.getElementById('ending').classList.add('show');
