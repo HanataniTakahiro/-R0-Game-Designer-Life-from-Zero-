@@ -175,7 +175,20 @@ app.post('/api/decision', async (req, res) => {
  */
 app.get('/api/stats/endings', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM ending_stats');
+    const result = await pool.query(`
+      SELECT
+        ending_id,
+        ending_title,
+        COUNT(*) AS total_count,
+        ROUND(COUNT(*) * 100.0 / NULLIF((SELECT COUNT(*) FROM endings), 0), 2) AS percentage,
+        AVG(final_dau) AS avg_dau,
+        AVG(final_rep) AS avg_rep,
+        AVG(final_grind) AS avg_grind,
+        AVG(final_fund) AS avg_fund
+      FROM endings
+      GROUP BY ending_id, ending_title
+      ORDER BY total_count DESC
+    `);
     res.json({ success: true, data: result.rows });
   } catch (error) {
     console.error('获取结局统计失败:', error);
@@ -189,7 +202,18 @@ app.get('/api/stats/endings', async (req, res) => {
  */
 app.get('/api/stats/events', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM event_stats');
+    const result = await pool.query(`
+      SELECT
+        event_code,
+        event_title,
+        COUNT(*) AS total_triggers,
+        SUM(CASE WHEN choice = 'approve' THEN 1 ELSE 0 END) AS approve_count,
+        SUM(CASE WHEN choice = 'reject' THEN 1 ELSE 0 END) AS reject_count,
+        ROUND(SUM(CASE WHEN choice = 'approve' THEN 1 ELSE 0 END) * 100.0 / NULLIF(COUNT(*), 0), 2) AS approve_rate
+      FROM event_tracking
+      GROUP BY event_code, event_title
+      ORDER BY total_triggers DESC
+    `);
     res.json({ success: true, data: result.rows });
   } catch (error) {
     console.error('获取事件统计失败:', error);

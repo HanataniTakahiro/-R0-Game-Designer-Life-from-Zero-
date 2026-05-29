@@ -70,7 +70,7 @@ CREATE INDEX idx_event_tracking_event_code ON event_tracking(event_code);
 CREATE INDEX idx_decisions_player_id ON decisions(player_id);
 
 -- 创建视图：事件统计汇总
-CREATE VIEW IF NOT EXISTS event_stats AS
+CREATE OR REPLACE VIEW event_stats AS
 SELECT 
     event_code,
     event_title,
@@ -83,7 +83,7 @@ GROUP BY event_code, event_title
 ORDER BY total_triggers DESC;
 
 -- 创建视图：结局统计汇总
-CREATE VIEW IF NOT EXISTS ending_stats AS
+CREATE OR REPLACE VIEW ending_stats AS
 SELECT 
     ending_id,
     ending_title,
@@ -98,7 +98,7 @@ GROUP BY ending_id, ending_title
 ORDER BY total_count DESC;
 
 -- 创建视图：每日新增玩家统计
-CREATE VIEW IF NOT EXISTS daily_new_players AS
+CREATE OR REPLACE VIEW daily_new_players AS
 SELECT 
     DATE(created_at) AS date,
     COUNT(*) AS new_player_count
