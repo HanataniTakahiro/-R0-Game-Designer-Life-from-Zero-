@@ -460,15 +460,7 @@ html, body { width: 100%; min-height: 100vh; background: var(--bg); color: var(-
     <div class="ending-pct">该结局达成率: <span style="color:var(--gold);font-weight:700;" id="ending-pct">--</span>%</div>
     <div class="ending-share">
       <button class="btn-share" onclick="shareResult()">📤 分享我的结局</button>
-      <div class="share-actions" id="share-actions" style="display:none;">
-        <button class="btn-share-sub" onclick="triggerShare()">📤 分享到...</button>
-        <button class="btn-share-sub" onclick="downloadShareImage()">💾 保存图片</button>
-        <button class="btn-share-sub" onclick="copyShareLink()">🔗 复制链接</button>
-      </div>
-      <div class="share-preview" id="share-preview" style="display:none;">
-        <img id="share-preview-img" alt="分享预览" style="width:100%;border-radius:12px;margin-top:10px;">
-        <div class="share-preview-hint">长按图片即可保存分享</div>
-      </div>
+      <button class="btn-share-sub" onclick="copyShareLink()">🔗 复制链接</button>
     </div>
     <div class="ending-survey">
       <div class="survey-text">感谢您的游玩~<br>如果有时间，麻烦做一个小调查，不尽感激！<br>链接：<a href="https://v.wjx.cn/vm/rCUj7YU.aspx" target="_blank">https://v.wjx.cn/vm/rCUj7YU.aspx</a><br>或者扫码：</div>
@@ -477,8 +469,7 @@ html, body { width: 100%; min-height: 100vh; background: var(--bg); color: var(-
     </div>
     <button class="btn-restart" onclick="restartGame()">再来一局</button>
   </div>
-  <canvas id="share-canvas" style="display:none;"></canvas>
-</div>
+  </div>
 
 <script>
 // ============================================================
@@ -694,8 +685,7 @@ const SILVER_POT_CHAIN = [
 // 状态
 // ============================================================
 let G = {};
-let _qrImage = null;
-let _qrReady = false;
+
 
 function initState(name) {
   // 合并旧提案(40) + 新提案(NEW_PROPOSALS)
@@ -1222,203 +1212,55 @@ function restartGame() {
   document.getElementById('game').classList.remove('show');
   document.getElementById('title').classList.add('show');
   document.getElementById('name-input').focus();
-  document.getElementById('share-actions').style.display = 'none';
-  document.getElementById('share-preview').style.display = 'none';
 }
 
 // ============================================================
 // 分享/裂变功能
 // ============================================================
-function generateShareImage() {
-  let canvas = document.getElementById('share-canvas');
-  if (!canvas) { canvas = document.createElement('canvas'); document.body.appendChild(canvas); canvas.id = 'share-canvas'; canvas.style.display = 'none'; }
-  const W = 600, H = 840;
-  canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext('2d');
+const SHARE_URL = 'https://xzkbxyx.com/';
 
+function buildShareText() {
   let end = ENDINGS[G.endingId ? G.endingId.replace('END_','') : 'BAD'] || ENDINGS.BAD;
-
-  // 背景渐变
-  const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
-  bgGrad.addColorStop(0, '#0a0e1a');
-  bgGrad.addColorStop(0.4, '#111827');
-  bgGrad.addColorStop(1, '#0a0e1a');
-  ctx.fillStyle = bgGrad;
-  ctx.fillRect(0, 0, W, H);
-
-  // 光晕
-  const glow = ctx.createRadialGradient(W/2, 100, 20, W/2, 100, 280);
-  glow.addColorStop(0, 'rgba(240,192,64,0.10)');
-  glow.addColorStop(1, 'rgba(240,192,64,0)');
-  ctx.fillStyle = glow;
-  ctx.fillRect(0, 0, W, H);
-
-  // 装饰线
-  ctx.strokeStyle = 'rgba(240,192,64,0.12)';
-  ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(60, 80); ctx.lineTo(W-60, 80); ctx.stroke();
-
-  // 徽章
-  ctx.textAlign = 'center';
-  ctx.font = '64px "Segoe UI Emoji","Apple Color Emoji",sans-serif';
-  ctx.fillText(end.badge, W/2, 140);
-
-  // 标题
-  ctx.fillStyle = '#f0c040';
-  ctx.font = 'bold 28px "PingFang SC","Microsoft YaHei","Segoe UI",sans-serif';
-  ctx.fillText('我的结局：' + end.title, W/2, 185);
-
-  // 描述
-  ctx.fillStyle = '#94a3b8';
-  ctx.font = '14px "PingFang SC","Microsoft YaHei","Segoe UI",sans-serif';
-  const descLines = wrapText(ctx, end.desc, W - 120);
-  descLines.forEach((line, i) => ctx.fillText(line, W/2, 218 + i * 22));
-
-  // 四维数据
-  const cardsY = 228 + descLines.length * 22;
-  const cw = (W - 160) / 2, ch = 56;
-  const stats = [
-    { l:'最终日活', v:formatNum(G.dau), c:'#f0c040' },
-    { l:'最终口碑', v:G.rep, c:G.rep>=55?'#22c55e':'#ef4444' },
-    { l:'爆肝强度', v:G.grind, c:G.grind>60?'#ef4444':'#22c55e' },
-    { l:'剩余资金', v:formatNum(G.fund), c:'#e2e8f0' }
-  ];
-  stats.forEach((s, i) => {
-    const x = 70 + (i%2)*(cw+20), y = cardsY + Math.floor(i/2)*(ch+10);
-    ctx.fillStyle = 'rgba(255,255,255,0.03)';
-    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-    roundRect(ctx, x, y, cw, ch, 8); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#64748b'; ctx.font = '11px "PingFang SC","Microsoft YaHei","Segoe UI",sans-serif';
-    ctx.fillText(s.l, x+cw/2, y+20);
-    ctx.fillStyle = s.c; ctx.font = 'bold 20px "PingFang SC","Microsoft YaHei","Segoe UI",sans-serif';
-    ctx.fillText(String(s.v), x+cw/2, y+44);
-  });
-
-  // 二维码
-  if (_qrReady && _qrImage) {
-    const qs = 100, qx = W/2 - qs/2, qy = cardsY + 2*(ch+10) + 30;
-    ctx.fillStyle = '#e2e8f0';
-    ctx.font = 'bold 16px "PingFang SC","Microsoft YaHei","Segoe UI",sans-serif';
-    ctx.fillText('扫码跟我一起当策划', W/2, qy);
-    ctx.fillStyle = '#fff';
-    roundRect(ctx, qx - 5, qy + 8, qs + 10, qs + 10, 8); ctx.fill();
-    ctx.drawImage(_qrImage, qx, qy + 13, qs, qs);
-  }
-
-  // 底部
-  ctx.fillStyle = '#475569';
-  ctx.font = '11px "PingFang SC","Microsoft YaHei","Segoe UI",sans-serif';
-  ctx.fillText('腾讯光子 · 光核社区出品', W/2, H - 28);
-
-  return canvas;
+  return '🎮 我在《重生之我要当顶级策划》中达成了「' + end.title + '」结局！\n📊 DAU:' + formatNum(G.dau) + ' | 口碑:' + G.rep + ' | 爆肝:' + G.grind + ' | 资金:' + formatNum(G.fund) + '\n👉 来 ' + SHARE_URL + ' 跟我一起当策划';
 }
 
-function wrapText(ctx, text, maxWidth) {
-  const lines = []; let cur = '';
-  for (const ch of text) {
-    if (ctx.measureText(cur + ch).width > maxWidth) { lines.push(cur); cur = ch; }
-    else cur += ch;
-  }
-  if (cur) lines.push(cur);
-  return lines;
-}
+async function shareResult() {
+  let end = ENDINGS[G.endingId ? G.endingId.replace('END_','') : 'BAD'] || ENDINGS.BAD;
+  const shareTitle = '我的结局：' + end.title + '！';
+  const shareText = buildShareText();
 
-function roundRect(ctx, x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y);
-  ctx.quadraticCurveTo(x+w,y,x+w,y+r); ctx.lineTo(x+w,y+h-r);
-  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h); ctx.lineTo(x+r,y+h);
-  ctx.quadraticCurveTo(x,y+h,x,y+h-r); ctx.lineTo(x,y+r);
-  ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
-}
-
-function shareResult() {
-  try {
-    let canvas = generateShareImage();
-    let dataUrl;
+  if (navigator.share) {
     try {
-      dataUrl = canvas.toDataURL('image/png');
-    } catch(taintErr) {
-      // Canvas 被 QR 码跨域污染，禁用 QR 重试
-      console.warn('Canvas tainted, retrying without QR');
-      _qrReady = false;
-      canvas = generateShareImage();
-      dataUrl = canvas.toDataURL('image/png');
+      await navigator.share({ title: shareTitle, text: shareText, url: SHARE_URL });
+      return;
+    } catch (e) {
+      if (e.name === 'AbortError') return;
+      console.warn('Web Share 失败，降级复制链接:', e.message);
     }
-    document.getElementById('share-preview-img').src = dataUrl;
-    document.getElementById('share-preview').style.display = 'block';
-    document.getElementById('share-actions').style.display = 'flex';
-    document.getElementById('share-preview-img').scrollIntoView({behavior:'smooth',block:'nearest'});
-  } catch(e) {
-    console.error(e);
-    alert('分享图生成失败：' + e.message);
   }
-}
-
-async function triggerShare() {
-  try {
-    let canvas = generateShareImage();
-    let dataUrl;
-    try {
-      dataUrl = canvas.toDataURL('image/png');
-    } catch(taintErr) {
-      _qrReady = false;
-      canvas = generateShareImage();
-      dataUrl = canvas.toDataURL('image/png');
-    }
-    const resp = await fetch(dataUrl);
-    const blob = await resp.blob();
-    let end = ENDINGS[G.endingId?G.endingId.replace('END_',''):'BAD']||ENDINGS.BAD;
-    const title = '我的结局：'+end.title+'！';
-    const text = '在《重生之我要当顶级策划》中，我成了"'+end.title+'"（DAU '+formatNum(G.dau)+'，口碑 '+G.rep+'）。你也来测测？';
-
-    if (navigator.share && navigator.canShare) {
-      const file = new File([blob], 'ending.png', {type:'image/png'});
-      if (navigator.canShare({title,text,files:[file]})) {
-        try { await navigator.share({title,text,files:[file]}); return; }
-        catch(e) { if(e.name!=='AbortError') console.warn(e); }
-      }
-    }
-    if (navigator.share) {
-      try { await navigator.share({title,text}); return; }
-      catch(e) { if(e.name!=='AbortError') console.warn(e); }
-    }
-    copyShareLink();
-  } catch(e) {
-    console.error(e);
-    copyShareLink();
-  }
-}
-
-function downloadShareImage() {
-  let canvas = generateShareImage();
-  let dataUrl;
-  try {
-    dataUrl = canvas.toDataURL('image/png');
-  } catch(taintErr) {
-    _qrReady = false;
-    canvas = generateShareImage();
-    dataUrl = canvas.toDataURL('image/png');
-  }
-  const a = document.createElement('a');
-  a.download = '我的顶级策划结局.png';
-  a.href = dataUrl;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  copyShareLink();
 }
 
 function copyShareLink() {
-  let end = ENDINGS[G.endingId?G.endingId.replace('END_',''):'BAD']||ENDINGS.BAD;
-  const text = '🎮 我在《重生之我要当顶级策划》中达成了「'+end.title+'」结局！\n📊 DAU:'+formatNum(G.dau)+' | 口碑:'+G.rep+' | 爆肝:'+G.grind+' | 资金:'+formatNum(G.fund)+'\n👉 来 https://xzkbxyx.com/ 跟我一起当策划';
-  if (navigator.clipboard&&navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(()=>alert('已复制！快去分享给朋友吧~')).catch(()=>fallbackCopy(text));
-  } else fallbackCopy(text);
+  const text = buildShareText();
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      alert('链接已复制！快去分享给朋友吧~');
+    }).catch(function() {
+      fallbackCopy(text);
+    });
+  } else {
+    fallbackCopy(text);
+  }
 }
 
 function fallbackCopy(text) {
   const ta = document.createElement('textarea');
-  ta.value=text; ta.style.cssText='position:fixed;opacity:0';
-  document.body.appendChild(ta); ta.select();
-  try{document.execCommand('copy');alert('已复制！')}catch(e){alert('复制失败：\n'+text)}
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;opacity:0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); alert('链接已复制！快去分享给朋友吧~'); } catch (e) { alert('复制失败：\n' + text); }
   document.body.removeChild(ta);
 }
 // 手机触屏滑动支持
@@ -1642,32 +1484,7 @@ function getEventCode(proposal) {
 window.onload = function() {
   initSwipe();
   showOpening();
-  loadQRCode();
 };
-
-function loadQRCode() {
-  _qrImage = new Image();
-  _qrImage.crossOrigin = 'anonymous';
-  _qrImage.onload = function() { 
-    console.log('URL.png 加载成功');
-    _qrReady = true; 
-  };
-  _qrImage.onerror = function() { 
-    console.warn('URL.png 加载失败，尝试使用 PIC.png'); 
-    _qrImage = new Image();
-    _qrImage.crossOrigin = 'anonymous';
-    _qrImage.onload = function() { 
-      console.log('PIC.png 加载成功');
-      _qrReady = true; 
-    };
-    _qrImage.onerror = function() {
-      console.warn('PIC.png 也加载失败，分享卡片将不含二维码'); 
-      _qrReady = false; 
-    };
-    _qrImage.src = 'PIC.png';
-  };
-  _qrImage.src = 'URL.png';
-}
 </script>
 </body>
 </html>
