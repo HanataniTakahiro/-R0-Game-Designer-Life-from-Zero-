@@ -1642,18 +1642,32 @@ function getEventCode(proposal) {
 window.onload = function() {
   initSwipe();
   showOpening();
+  loadQRCode();
+};
+
+function loadQRCode() {
   _qrImage = new Image();
-  _qrImage.onload = function() { _qrReady = true; };
+  _qrImage.crossOrigin = 'anonymous';
+  _qrImage.onload = function() { 
+    console.log('URL.png 加载成功');
+    _qrReady = true; 
+  };
   _qrImage.onerror = function() { 
     console.warn('URL.png 加载失败，尝试使用 PIC.png'); 
-    _qrImage.src = 'PIC.png';
+    _qrImage = new Image();
+    _qrImage.crossOrigin = 'anonymous';
+    _qrImage.onload = function() { 
+      console.log('PIC.png 加载成功');
+      _qrReady = true; 
+    };
     _qrImage.onerror = function() {
       console.warn('PIC.png 也加载失败，分享卡片将不含二维码'); 
       _qrReady = false; 
     };
+    _qrImage.src = 'PIC.png';
   };
   _qrImage.src = 'URL.png';
-};
+}
 </script>
 </body>
 </html>
