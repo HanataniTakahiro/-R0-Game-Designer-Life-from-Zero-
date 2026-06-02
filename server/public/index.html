@@ -267,6 +267,25 @@ html, body { width: 100%; min-height: 100vh; background: var(--bg); color: var(-
   font-size: 15px; font-weight: 700; color: #1a1a2e; cursor: pointer;
 }
 
+/* Share */
+.ending-share { margin-bottom: 12px; width: 100%; max-width: 340px; }
+.btn-share {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border: none; border-radius: 10px; padding: 10px 32px;
+  font-size: 15px; font-weight: 700; color: #fff; cursor: pointer;
+  transition: all 0.2s; letter-spacing: 1px;
+}
+.btn-share:hover, .btn-share:active { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(99,102,241,0.35); }
+.share-actions { display: flex; gap: 8px; margin-top: 8px; justify-content: center; flex-wrap: wrap; }
+.btn-share-sub {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px; padding: 6px 16px; font-size: 13px; color: var(--text2);
+  cursor: pointer; transition: all 0.15s;
+}
+.btn-share-sub:hover, .btn-share-sub:active { background: rgba(255,255,255,0.12); color: var(--text); }
+.share-preview { margin-top: 8px; }
+.share-preview-hint { font-size: 11px; color: var(--text2); margin-top: 6px; opacity: 0.7; }
+
 	/* ========== Feedback Popup ========== */
 #feedback-popup {
   position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 850;
@@ -282,11 +301,7 @@ html, body { width: 100%; min-height: 100vh; background: var(--bg); color: var(-
 .feedback-box .fb-icon { font-size: 36px; margin-bottom: 6px; }
 .feedback-box .fb-title { font-size: 15px; color: var(--text); font-weight: 700; margin-bottom: 10px; }
 .feedback-box .fb-text { font-size: 13px; color: var(--text2); line-height: 1.7; }
-.btn-fb-continue {
-  margin-top: 16px; background: var(--gold); border: none; border-radius: 8px;
-  padding: 8px 28px; font-size: 14px; font-weight: 700; color: #1a1a2e; cursor: pointer;
-}
-.btn-fb-continue:hover { transform: translateY(-1px); }
+.fb-hint { margin-top: 14px; font-size: 12px; color: rgba(255,255,255,0.25); }
 
 /* ========== Tutorial ========== */
 #tutorial {
@@ -410,12 +425,12 @@ html, body { width: 100%; min-height: 100vh; background: var(--bg); color: var(-
   </div>
 
   <!-- Feedback Popup -->
-  <div id="feedback-popup">
+  <div id="feedback-popup" onclick="closeFeedback()">
     <div class="feedback-box">
       <div class="fb-icon" id="fb-icon">📢</div>
       <div class="fb-title" id="fb-title"></div>
       <div class="fb-text" id="fb-text"></div>
-      <button class="btn-fb-continue" onclick="closeFeedback()">继续</button>
+      <div class="fb-hint">点击任意区域继续</div>
     </div>
   </div>
 
@@ -443,6 +458,10 @@ html, body { width: 100%; min-height: 100vh; background: var(--bg); color: var(-
     <div class="ending-stats" id="ending-stats"></div>
     <div class="ending-desc" id="ending-desc"></div>
     <div class="ending-pct">该结局达成率: <span style="color:var(--gold);font-weight:700;" id="ending-pct">--</span>%</div>
+    <div class="ending-share">
+      <button class="btn-share" onclick="shareResult()">📤 分享我的结局</button>
+      <button class="btn-share-sub" onclick="copyShareLink()">🔗 复制链接</button>
+    </div>
     <div class="ending-survey">
       <div class="survey-text">感谢您的游玩~<br>如果有时间，麻烦做一个小调查，不尽感激！<br>链接：<a href="https://v.wjx.cn/vm/rCUj7YU.aspx" target="_blank">https://v.wjx.cn/vm/rCUj7YU.aspx</a><br>或者扫码：</div>
       <img class="survey-img" src="PIC.png" alt="问卷调查二维码">
@@ -450,7 +469,7 @@ html, body { width: 100%; min-height: 100vh; background: var(--bg); color: var(-
     </div>
     <button class="btn-restart" onclick="restartGame()">再来一局</button>
   </div>
-</div>
+  </div>
 
 <script>
 // ============================================================
@@ -666,6 +685,7 @@ const SILVER_POT_CHAIN = [
 // 状态
 // ============================================================
 let G = {};
+
 
 function initState(name) {
   // 合并旧提案(40) + 新提案(NEW_PROPOSALS)
@@ -1195,6 +1215,54 @@ function restartGame() {
 }
 
 // ============================================================
+// 分享/裂变功能
+// ============================================================
+const SHARE_URL = 'https://xzkbxyx.com/';
+
+function buildShareText() {
+  let end = ENDINGS[G.endingId ? G.endingId.replace('END_','') : 'BAD'] || ENDINGS.BAD;
+  return '🎮 我在《重生之我要当顶级策划》中达成了「' + end.title + '」结局！\n📊 DAU:' + formatNum(G.dau) + ' | 口碑:' + G.rep + ' | 爆肝:' + G.grind + ' | 资金:' + formatNum(G.fund) + '\n👉 来 ' + SHARE_URL + ' 跟我一起当策划';
+}
+
+async function shareResult() {
+  let end = ENDINGS[G.endingId ? G.endingId.replace('END_','') : 'BAD'] || ENDINGS.BAD;
+  const shareTitle = '我的结局：' + end.title + '！';
+  const shareText = buildShareText();
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: shareTitle, text: shareText, url: SHARE_URL });
+      return;
+    } catch (e) {
+      if (e.name === 'AbortError') return;
+      console.warn('Web Share 失败，降级复制链接:', e.message);
+    }
+  }
+  copyShareLink();
+}
+
+function copyShareLink() {
+  const text = buildShareText();
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      alert('链接已复制！快去分享给朋友吧~');
+    }).catch(function() {
+      fallbackCopy(text);
+    });
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;opacity:0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); alert('链接已复制！快去分享给朋友吧~'); } catch (e) { alert('复制失败：\n' + text); }
+  document.body.removeChild(ta);
+}
 // 手机触屏滑动支持
 // ============================================================
 let _touchStartX = 0;
